@@ -1,4 +1,4 @@
-/* Search */
+
 .search-wrap {
   display: flex;
   align-items: center;
@@ -23,14 +23,12 @@ ion-searchbar.search::part(input) {
   padding-right: 16px;
 }
 
-/* List rows */
+
 .row-title { margin: 0 0 2px; font-weight: 700; }
 .row-sub   { margin: 0; color: #6b7280; }
 .row-meta  { margin: 6px 0 0; color: #6b7280; font-size: 13px; display: flex; align-items: center; gap: 6px; }
 .meta-strong { font-weight: 600; }
 .dot { margin: 0 4px; }
-
-/* WhatsApp chip (opcional) */
 .wa {
   font-size: 20px;
   margin-left: 8px;
@@ -40,7 +38,7 @@ ion-searchbar.search::part(input) {
   color: #0D9488;
 }
 
-/* Empty state */
+
 .empty { text-align: center; padding: 24px; }
 .hero-img {
   width: 72%;

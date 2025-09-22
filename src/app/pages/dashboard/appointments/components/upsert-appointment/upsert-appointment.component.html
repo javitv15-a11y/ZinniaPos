@@ -4,7 +4,6 @@
 </app-header>
 
 <ion-content>
-  <!-- ================= Cliente ================= -->
   <div class="container">
     <ion-label class="title bold">Información de cliente</ion-label>
 
@@ -21,7 +20,6 @@
     </ion-item>
   </div>
 
-  <!-- ============== Tipo de consulta ============== -->
   <div class="container">
     <form class="form" [formGroup]="typeAppointmentsForm" *ngIf="typeAppointmentsForm">
       <ion-label class="title bold">Tipo de consulta</ion-label>
@@ -51,7 +49,6 @@
     </form>
   </div>
 
-  <!-- ============== Fecha y Hora ============== -->
   <div class="container">
     <form class="form" [formGroup]="dateForm" *ngIf="dateForm">
       <ion-label class="title bold">Fecha y Hora</ion-label>
@@ -82,7 +79,6 @@
     </form>
   </div>
 
-  <!-- ============== Observaciones ============== -->
   <div class="container">
     <ion-label class="title bold">Observaciones</ion-label>
     <ion-textarea

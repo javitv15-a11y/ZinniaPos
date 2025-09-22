@@ -1,4 +1,3 @@
-/* ===== Header ===== */
 ion-header {
   --border-width: 0 0 0.5px 0;
 }
@@ -6,7 +5,6 @@ ion-header {
   font-weight: 600;
 }
 
-/* ===== Galería ===== */
 .gallery {
   padding: 12px 16px 0;
 }
@@ -60,7 +58,6 @@ ion-header {
   opacity: 0.8;
 }
 
-/* ===== Secciones ===== */
 .section {
   padding: 14px 16px 6px;
 }
@@ -98,7 +95,6 @@ ion-header {
   margin: 0;
 }
 
-/* Estado */
 .status {
   display: inline-flex;
   align-items: center;
@@ -124,7 +120,6 @@ ion-header {
   border-color: #e5e7eb;
 }
 
-/* Inventario */
 .inventory {
   margin: 8px 16px 16px;
   border-radius: 14px;
@@ -162,7 +157,6 @@ ion-header {
   font-weight: 700;
 }
 
-/* Footer CTA */
 .footer ion-button {
   --border-radius: 14px;
   font-weight: 600;
@@ -170,14 +164,12 @@ ion-header {
   --background-activated: #000;
 }
 
-/* Error */
 .error-state {
   padding: 16px;
   text-align: center;
   color: #6b7280;
 }
 
-/* Thumbs con botón eliminar */
 .thumb-wrap {
   position: relative;
   display: inline-block;
@@ -198,14 +190,13 @@ ion-header {
   cursor: pointer;
 }
 
-/* Modal edición */
 ion-modal ion-item {
   --inner-padding-top: 8px;
   --inner-padding-bottom: 8px;
 }
-/* ===== Modal de edición (estilo mock) ===== */
+
 .edit-modal ion-header.edit-header ion-toolbar {
-  border: 2px dotted rgba(0, 0, 0, 0.18); /* quita si no quieres el punteado */
+  border: 2px dotted rgba(0, 0, 0, 0.18);
   border-left: 0;
   border-right: 0;
 }
@@ -216,12 +207,10 @@ ion-modal ion-item {
   font-size: 22px;
 }
 
-/* Contenido del modal */
 .edit-content {
   --padding-top: 12px;
 }
 
-/* Form con labels apilados y controles redondeados */
 .edit-form {
   display: flex;
   flex-direction: column;
@@ -247,7 +236,6 @@ ion-modal ion-item {
   background: #fff;
 }
 
-/* Celda tipo picker (Categoría / Proveedor) */
 .picker {
   width: 100%;
   border: 1px solid rgba(0, 0, 0, 0.1);
@@ -272,7 +260,6 @@ ion-modal ion-item {
   color: #111;
 }
 
-/* Botón guardar inferior */
 .btn-save {
   --border-radius: 12px;
   --background: #111;
@@ -287,10 +274,6 @@ ion-modal ion-item {
   margin-top: 6px;
 }
 
-
-/* Galería dentro del modal (un poco más compacta) */
 .edit-modal .gallery {
   padding: 0 0 8px;
 }
-
-

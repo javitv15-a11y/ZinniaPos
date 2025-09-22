@@ -92,29 +92,29 @@ export class OrderListComponent implements OnInit, OnChanges  {
   private groupOrdersByDate(): void {
     const today = new Date();
 
-    // Normalizar y ordenar TODAS las órdenes por fecha desc primero
+    
     const sorted = [...this.orders].sort((a, b) =>
       new Date(b.createAt).getTime() - new Date(a.createAt).getTime()
     );
 
-    // 1) Órdenes de HOY
+    
     this.ordersToday = sorted.filter(o => this.isSameDay(new Date(o.createAt), today));
 
-    // 2) Agrupar el resto por fecha (key yyyy-mm-dd en tiempo local)
+  
     const groups: Record<string, { date: Date; orders: IOrder[] }> = {};
 
     sorted
       .filter(o => !this.isSameDay(new Date(o.createAt), today))
       .forEach(o => {
         const d = new Date(o.createAt);
-        const key = this.localDateKey(d); // yyyy-mm-dd (local)
+        const key = this.localDateKey(d); 
         if (!groups[key]) {
           groups[key] = { date: new Date(d.getFullYear(), d.getMonth(), d.getDate()), orders: [] };
         }
         groups[key].orders.push(o);
       });
 
-    // 3) Pasar a array, ordenar por fecha desc y preparar labels
+    
     this.ordersByDay = Object.entries(groups)
       .map(([key, { date, orders }]) => ({
         key,

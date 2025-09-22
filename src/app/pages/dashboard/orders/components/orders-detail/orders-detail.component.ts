@@ -63,7 +63,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   order?: UIOrderDetail | null;
 
   private id = "";
-  hideClientBlock = false; // 👈 bandera
+  hideClientBlock = false; 
 
   private prodById = new Map<string, ProductApi>();
   private prodByUnique = new Map<string, ProductApi>();
@@ -85,7 +85,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     this.id = String(this.route.snapshot.paramMap.get("id") || "");
 
     const st = (history.state && history.state.pref) || {};
-    this.hideClientBlock = !!history.state?.fromCustomer; // 👈 si viene de customer, ocultamos cliente
+    this.hideClientBlock = !!history.state?.fromCustomer;
 
     if (st && (st.id || this.id)) {
       const preItems: UIItem[] = Array.isArray(st.items)
@@ -224,7 +224,6 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     return String(n ?? "").trim();
   }
 
-  /** Busca el cliente por id y si no, por teléfono. Completa nombre/correo/dirección/teléfono. */
   private async inflateCustomerFields() {
     if (!this.order) return;
 
@@ -270,9 +269,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
           this.order.numero_celular = p ? String(p) : undefined;
         }
       }
-    } catch {
-      /* no cortar la UI si falla */
-    }
+    } catch {}
   }
 
   // ============== Productos (índices / helpers) ==============
@@ -349,11 +346,9 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
 
   private computeTotal(o?: UIOrderDetail | null): number | null {
     if (!o) return null;
-    // si viene total válido, úsalo
     if (o.total != null && Number.isFinite(Number(o.total))) {
       return Number(o.total);
     }
-    // calcula desde items
     const t = (o.items || []).reduce((acc, it) => {
       if (it?.subtotal != null && Number.isFinite(Number(it.subtotal))) {
         return acc + Number(it.subtotal);
@@ -372,17 +367,14 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     return this.computeTotal(this.order);
   }
 
-  /** Si la URL requiere auth/CORS, la bajo como blob y devuelvo blob: */
   private async ensureDisplayable(url: string | null): Promise<string | null> {
     if (!url) return null;
     const resolved = this.toStringUrl(url);
     if (!resolved) return null;
 
-    // Si ya es data: o blob:, úsala tal cual
     if (/^(data:|blob:)/i.test(resolved)) return resolved;
 
     try {
-      // Intenta traerla con HttpClient (aplica tu interceptor/token)
       const blob = await firstValueFrom(
         this.http.get(resolved, { responseType: "blob" as const })
       );
@@ -390,12 +382,10 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
       this.blobUrls.push(objUrl);
       return objUrl;
     } catch {
-      // Si falla (CORS 4xx), al menos devuelve la URL directa por si el server sí permite <img> sin XHR
       return resolved;
     }
   }
 
-  /** Imágenes inline dentro de ProductApi */
   private collectImagesFromApi(p: any): string[] {
     const arr =
       (Array.isArray(p?.imagenes) && p.imagenes) ||
@@ -422,14 +412,12 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     return out;
   }
 
-  /** Convierte Observable o Promise a Promise con tipo */
   private async resolveMaybe<T>(v: any): Promise<T> {
-    if (v && typeof v.then === "function") return await v; // Promise
-    if (v && typeof v.subscribe === "function") return await firstValueFrom(v); // Observable
+    if (v && typeof v.then === "function") return await v;
+    if (v && typeof v.subscribe === "function") return await firstValueFrom(v);
     return v as T;
   }
 
-  // ======= 👇 Igual que product-management: portada y galería con id + idunico =======
   private async fetchCoverFor(
     id: string,
     unique?: string | null
@@ -477,11 +465,9 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     }
   }
 
-  /** Igual que product-management: portada por id + idunico, con caché y sin blobs */
   private async hydrateItemImages() {
     if (!this.order?.items?.length) return;
 
-    // construye índice ProductApi (id → {idunico,...}) una sola vez
     if (!this.prodById.size) {
       try {
         const list = await this.resolveMaybe<ProductApi[]>(
@@ -495,19 +481,16 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     }
 
     const tasks = this.order.items.map(async (it) => {
-      // si ya viene con imagen, úsala tal cual
       if (it.imageUrl) return;
 
       const pid = String(it.productId ?? "");
       if (!pid) return;
 
-      // caché por id
       if (this.imgCache.has(pid)) {
         it.imageUrl = this.imgCache.get(pid) || undefined;
         return;
       }
 
-      // busca idunico para pedir portada como en product-management
       const p = this.prodById.get(pid);
       const idunico = p
         ? String((p as any).idunico ?? (p as any).id_unico ?? "") || undefined
@@ -533,7 +516,6 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     await Promise.allSettled(tasks);
   }
 
-  // ============== Mapper pedido → UI ==============
   private toUIOrder(o: any): UIOrderDetail {
     const oid =
       o?.id ?? o?._id ?? o?.pedido_id ?? o?.order_id ?? o?.codigo ?? "";
@@ -649,7 +631,6 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
 
     const itemsCount = items.reduce((acc, it) => acc + (it.cantidad || 1), 0);
 
-    // Cliente (con alias)
     const clienteId =
       o?.cliente_id ??
       o?.clienteId ??
@@ -718,7 +699,6 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     };
   }
 
-  // ============== UI helpers ==============
   pillClass() {
     const s = (this.order?.estado || "").toLowerCase();
     return {
@@ -731,7 +711,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   }
 
   onImgError(it: UIItem) {
-    it.imageUrl = undefined; // vuelve al placeholder
+    it.imageUrl = undefined;
     this.cd.markForCheck();
   }
 

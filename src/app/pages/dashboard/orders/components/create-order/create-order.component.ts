@@ -73,12 +73,11 @@ import { IUser } from "src/app/core/interfaces/bussiness/user.interface";
     HeaderComponent,
     DirectivesModule,
     ReactiveFormsModule,
-    CustomInputComponent,
     FormsModule,
   ],
 })
 export class CreateOrderComponent implements OnInit, OnDestroy {
-  // ===== Inyección =====
+ 
   public _modalCtrl = inject(ModalController);
   private _formBuilder = inject(FormBuilder);
   private _orderService = inject(OrderService);
@@ -88,7 +87,7 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
   private _clientesService = inject(ClientesService);
   private _authSessionService = inject(AuthSessionService);
 
-  // ===== Estado =====
+
   public selectedCustomer: ICustomer | undefined;
 
   public subtotal = 0;
@@ -107,7 +106,7 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
   public orderItems: IOrderItem[] = [];
   public order!: IOrderPayload;
 
-  // Modales embebidos
+
   public customerModalOpen = false;
   public productModalOpen = false;
   private selectedProductIds = new Set<string | number>();
@@ -115,7 +114,6 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
   private _loggedUser: IUser | null = null;
   private _destroy$ = new Subject<void>();
 
-  // ========= NUEVO: caché de portadas =========
   private coverCache = new Map<string, string | null>();
 
   ngOnInit() {
@@ -135,7 +133,7 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
     this._loggedUser = this._authSessionService.getCurrentUser();
     this.initializeOrder();
 
-    // Carga clientes + productos desde BD
+  
     this.loadLookupsFromDB();
   }
 
@@ -144,7 +142,6 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
     this._destroy$.complete();
   }
 
-  // ================== STOCK & HELPERS ==================
   public getStock(raw: any): number {
     const s =
       raw?.stock ??
@@ -165,7 +162,7 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
     if (item.quantity > max) item.quantity = max;
   }
 
-  // ================== TOTALES ==================
+ 
   get discountValue(): number {
     if (!this.discount) return 0;
     const value = this.discount.value || 0;
@@ -196,8 +193,7 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ================== UI/ACCIONES ==================
-  /** Devuelve la miniatura del producto usando images[0] o caché de portadas; fallback a ícono */
+
   public getImageSrc(product: IProduct): string {
     const id = String((product as any).id ?? "");
     const cached = this.coverCache.get(id) || null;
@@ -251,7 +247,7 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ===== Helpers =====
+
   private onlyDigits(t: string) {
     return (t || "").toString().replace(/\D/g, "");
   }
@@ -277,7 +273,7 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
     );
   }
 
-  // === Cliente (modal embebido) ===
+
   public onCustomerSearch(ev: any) {
     const term = ev?.detail?.value ?? "";
     this.filteredCustomers = this.filterList(this.customers, term, [
@@ -294,23 +290,22 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
     );
     if (found) {
       this.selectedCustomer = found;
-      this.customerModalOpen = false; // cierra el modal al elegir
+      this.customerModalOpen = false; 
     }
   }
 
   public onCreateCustomer() {
-    // TODO: abrir flujo de creación si aplica
+   
   }
 
-  // === Productos (modal embebido) ===
+ 
   public openProductsModal() {
-    // Marcar como seleccionados los que ya están en orderItems y tienen stock
+   
     this.selectedProductIds = new Set(
       this.orderItems
         .filter((it) => !this.isOutOfStock(it.product))
         .map((it) => (it.product as any).id)
     );
-    // Reset de filtro y lista filtrada
     this.filteredProducts = [...this.products];
     this.productModalOpen = true;
   }
@@ -319,7 +314,7 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
     const term = ev?.detail?.value ?? "";
     this.filteredProducts = this.filterList(this.products, term, [
       (p) => p.name,
-      (p: any) => p.sku || p.codigo || "", // opcionales si existen
+      (p: any) => p.sku || p.codigo || "", 
     ]);
   }
 
@@ -349,15 +344,14 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
       ids.includes(p.id)
     );
 
-    // Construir orderItems a partir de la selección (cantidad por defecto = 1)
+    
     const newItems = selectedProducts
-      .filter((product) => !this.isOutOfStock(product)) // por seguridad
+      .filter((product) => !this.isOutOfStock(product)) 
       .map((product) => {
         const existing = this.orderItems.find(
           (it) => String((it.product as any).id) === String((product as any).id)
         );
         if (existing) {
-          // Asegura que la cantidad existente no exceda el stock
           this.clampToStock(existing);
           return existing;
         }
@@ -370,11 +364,11 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
         );
 
         const stock = this.getStock(product);
-        item.quantity = Math.min(1, stock); // por defecto 1 si hay stock
+        item.quantity = Math.min(1, stock); 
         return item;
       });
 
-    // Si había ítems previos (duplicados ya filtrados arriba), mantenemos los existentes
+    
     const existingMap = new Map(
       this.orderItems.map((i) => [String((i.product as any).id), i])
     );
@@ -385,7 +379,7 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
     });
     this.orderItems = Array.from(existingMap.values());
 
-    // Ajuste final: por si algún stock cambió y había items previos
+ 
     this.orderItems.forEach((it) => this.clampToStock(it));
 
     this.productModalOpen = false;
@@ -393,15 +387,15 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
   }
 
   public onCreateProduct() {
-    // TODO: abrir flujo de creación si aplica
+   
   }
 
   public selectCustomer(c: ICustomer) {
     this.selectedCustomer = c;
-    this.customerModalOpen = false; // cerrar al elegir
+    this.customerModalOpen = false; 
   }
 
-  /** 🧱 Construye el payload exacto que requiere el backend */
+ 
   private buildCreatePayload(): CreatePedidoDto {
     const clienteId = this.selectedCustomer?.id as any;
     const phone = this.onlyDigits(this.selectedCustomer?.mobile || "");
@@ -415,7 +409,6 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
       cliente_id: clienteId,
       numero_celular: phone,
       items,
-      // estado: 'pendiente'
     };
   }
 
@@ -425,7 +418,7 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Revalida stock por si cambió
+    
     let stockError = false;
     this.orderItems.forEach((it) => {
       const max = this.getStock(it.product);
@@ -441,10 +434,10 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
         color: "warning",
       });
       this.updateTotals();
-      return; // evita enviar si hubo ajuste (puedes quitar este return si quieres seguir)
+      return; 
     }
 
-    // payload local (opcional)
+   
     this.order.userId = this._loggedUser?.idunico ?? "";
     this.order.customerId = this.selectedCustomer!.id;
     this.order.items = this.orderItems;
@@ -453,7 +446,7 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
     this.order.subtotal = this.subtotal;
     this.order.total = this.total;
 
-    // ✅ payload exacto para el backend
+    
     const payload = this.buildCreatePayload();
 
     await this._loadingService.showLoading(waitingMessageCreatingOrder);
@@ -475,7 +468,7 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ================== FORM ==================
+
   private buildFormArray(): void {
     this.productsForm = this._formBuilder.group({
       products: this._formBuilder.array([]),
@@ -501,7 +494,7 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
     };
   }
 
-  // ================== CARGA DE DATOS (BD) ==================
+ 
   private mapClienteApiToICustomer = (c: ClienteApi): ICustomer => ({
     id: c.id,
     fullname: c.nombre ?? "",
@@ -566,12 +559,11 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
     return rawList.map(this._productService.toIProduct);
   }
 
-  /** ====== NUEVO: hidrata portadas como en product-management ====== */
+  
   private async hydrateProductCovers(products: IProduct[]) {
-    // Traer lista API (para idunico)
     let apiList: any[] = [];
     try {
-      apiList = await this._productService.getAll(); // ProductApi[]
+      apiList = await this._productService.getAll(); 
     } catch {
       apiList = [];
     }
@@ -629,7 +621,7 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
       this.normalizeProductsPrices();
       this.filteredProducts = [...this.products];
 
-      // ========= NUEVO: traer portadas y refrescar listas =========
+      
       await this.hydrateProductCovers(this.products);
       this.filteredProducts = [...this.products];
     } catch (err) {
@@ -652,12 +644,11 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
     const { data } = await modal.onDidDismiss();
 
     if (data) {
-      // data debe cumplir con IDiscount (type + value)
       this.discount = data;
       this.updateTotals();
     }
   }
 
-  // trackBy para rendimiento
+  
   trackByItemId = (_: number, it: IOrderItem) => it.id;
 }

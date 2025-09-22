@@ -1,11 +1,10 @@
-/* Header */
+
 ion-header { --border-width: 0 0 0.5px 0; }
 .title { font-weight: 600; }
 
-/* Sección */
 .section-divider { --background: #f7f7fa; --color: #111827; font-weight: 700; }
 
-/* Tarjeta */
+
 .card {
   margin: 8px 12px 16px;
   padding: 12px;
@@ -24,13 +23,12 @@ ion-header { --border-width: 0 0 0.5px 0; }
 .col--label { color: #6b7280; }
 .col--value { color: #111827; word-break: break-word; }
 
-/* Lista de citas */
+
 .row-title { margin: 0 0 2px; font-weight: 700; }
 .row-sub, .row-meta { margin: 0; color: #6b7280; }
 .row-meta { font-size: 13px; }
 .dot { margin: 0 6px; opacity: .6; }
 
-/* Chips de estado (mismos colores que citas) */
 .status {
   display: inline-flex;
   align-items: center;

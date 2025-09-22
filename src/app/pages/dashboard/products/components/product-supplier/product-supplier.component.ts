@@ -3,15 +3,12 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { IonicModule, ModalController } from '@ionic/angular';
 import { RouterModule } from '@angular/router';
-
 import { HeaderComponent } from 'src/app/shared/components/header/header.component';
 import { settingHeader } from './product-supplier.const';
-
-// Servicio para guardar proveedor (ajusta la ruta/nombre si ya lo tienes)
 import { SupplierService } from 'src/app/core/services/bussiness/supplier.service';
 
 @Component({
-  selector: 'app-product-supplier', // puedes renombrar a app-supplier-upsert si lo prefieres
+  selector: 'app-product-supplier', 
   standalone: true,
   templateUrl: './product-supplier.component.html',
   styleUrls: ['./product-supplier.component.scss'],
@@ -32,7 +29,7 @@ export class ProductSupplierComponent {
   constructor(
     private fb: FormBuilder,
     private modalCtrl: ModalController,
-    private suppliersService: SupplierService, // implementa saveSupplier(...)
+    private suppliersService: SupplierService, 
   ) {}
 
   ionViewWillEnter() {

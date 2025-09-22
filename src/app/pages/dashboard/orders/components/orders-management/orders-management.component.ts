@@ -17,7 +17,7 @@ import {
   ClienteApi,
 } from "src/app/core/services/bussiness/clientes.service";
 
-/** ===== Filtros ===== */
+
 type FechaFiltro = "todas" | "hoy" | "7d" | "30d";
 type OrigenFiltro = "todos" | "whatsapp" | "app";
 
@@ -28,14 +28,14 @@ interface UiFilters {
 }
 
 type PedidoVm = PedidoApi & {
-  itemsCount?: number;      // total de unidades
-  cliente_nombre?: string;  // nombre resuelto
+  itemsCount?: number;      
+  cliente_nombre?: string;  
 };
 
 interface Grouped {
   label: string;
   items: PedidoVm[];
-  epoch: number; // para ordenar grupos por fecha desc
+  epoch: number; 
 }
 
 @Component({
@@ -53,21 +53,19 @@ export class OrdersManagementComponent implements OnInit {
   filtered: PedidoVm[] = [];
   grouped: Grouped[] = [];
 
-  /** búsqueda texto */
   query = "";
 
-  /** estado de filtros */
   filters: UiFilters = {
     estados: new Set<PedidoEstado>(),
     origen: "todos",
     fecha: "todas",
   };
 
-  /** Modal + navegación interna del modal */
+  
   isFiltersModalOpen = false;
   filtersPage: "root" | "estado" | "origen" | "fecha" = "root";
 
-  // índices de clientes
+ 
   private clientesById = new Map<string, string>();
   private clientesByPhone = new Map<string, string>();
 
@@ -79,7 +77,7 @@ export class OrdersManagementComponent implements OnInit {
 
   ngOnInit() { this.loadAll(); }
 
-  /** ================= CARGA PRINCIPAL ================= */
+  
   async loadAll() {
     this.loading = true;
     this.error = undefined;
@@ -92,7 +90,7 @@ export class OrdersManagementComponent implements OnInit {
 
       this.buildClienteIndices(clientes || []);
 
-      // Enriquecer + conteo inicial (suma cantidades si existen)
+      
       this.orders = (lista || []).map((o: any) => {
         const vm: PedidoVm = { ...(o as any) };
         vm.cliente_nombre = this.getClienteNombre(vm);
@@ -102,7 +100,7 @@ export class OrdersManagementComponent implements OnInit {
 
       this.runFiltersAndGrouping();
 
-      // ✅ hidrata unidades desde el detalle cuando la lista no trae cantidades
+      
       await this.hydrateCountsFromDetail(this.orders);
       this.runFiltersAndGrouping();
     } catch (e: any) {
@@ -141,7 +139,7 @@ export class OrdersManagementComponent implements OnInit {
     return String(emb || "");
   }
 
-  /** Quitar chips individuales y re-aplicar filtros */
+ 
 removeFilterChip(kind: "estado" | "origen" | "fecha", value?: PedidoEstado) {
   if (kind === "estado" && value) {
     this.filters.estados.delete(value);
@@ -154,7 +152,7 @@ removeFilterChip(kind: "estado" | "origen" | "fecha", value?: PedidoEstado) {
 }
 
 
-  /** ============== SUMA DE UNIDADES (lista/detalle) ============== */
+ 
   private unitsFromAny(o: any): number {
     const arr =
       (Array.isArray(o?.items) && o.items) ||
@@ -179,11 +177,10 @@ removeFilterChip(kind: "estado" | "origen" | "fecha", value?: PedidoEstado) {
       return sum;
     }
 
-    // Totales “flat” que algunas APIs exponen
+    
     const fields = [
       o?.cantidad_total, o?.total_cantidad, o?.total_unidades, o?.unidades_total,
       o?.qty_total, o?.quantity_total, o?.sum_cantidades,
-      // 👇 añadidos
       o?.items_count, o?.productos_count, o?.cantidad_items, o?.cantidad_articulos,
       o?.articulos, o?.itemsLength, o?.total_items,
     ]
@@ -191,7 +188,6 @@ removeFilterChip(kind: "estado" | "origen" | "fecha", value?: PedidoEstado) {
       .filter(n => Number.isFinite(n) && n >= 0) as number[];
     if (fields.length) return Math.max(...fields);
 
-    // Caída final: “número de líneas”
     const len =
       (Array.isArray(o?.items) && o.items.length) ||
       (Array.isArray(o?.detalle) && o.detalle.length) ||
@@ -205,7 +201,7 @@ removeFilterChip(kind: "estado" | "origen" | "fecha", value?: PedidoEstado) {
     return len;
   }
 
-  /** Hidrata unidades pidiendo el detalle si la lista no trae cantidades */
+  
   private async hydrateCountsFromDetail(list: PedidoVm[]) {
     const targets = list.filter((o) => {
       const initial = Number(o.itemsCount ?? 0);
@@ -215,7 +211,7 @@ removeFilterChip(kind: "estado" | "origen" | "fecha", value?: PedidoEstado) {
         (Array.isArray((o as any)?.productos) && (o as any).productos.length) ||
         (Array.isArray((o as any)?.order_items) && (o as any).order_items.length) ||
         (Array.isArray((o as any)?.line_items) && (o as any).line_items.length);
-      // Recalcular si NO hay arreglo o si el conteo es 0 (o muy chico)
+     
       return !hasArr || initial === 0;
     });
 
@@ -258,13 +254,13 @@ removeFilterChip(kind: "estado" | "origen" | "fecha", value?: PedidoEstado) {
     return null;
   }
 
-  // ---------- API p/ template ----------
+ 
   getItemsCount(o: any): number {
     const fromVm = (o as any)?.itemsCount;
     return Number((fromVm ?? this.unitsFromAny(o)) || 0);
   }
 
-  // ---------- Filtros & Agrupado ----------
+  
   get activeFiltersCount(): number {
     let n = 0;
     if (this.filters.estados.size) n++;
@@ -299,7 +295,7 @@ removeFilterChip(kind: "estado" | "origen" | "fecha", value?: PedidoEstado) {
   private runFiltersAndGrouping() {
     let arr = [...this.orders] as any[];
 
-    // texto
+
     const q = (this.query || "").trim().toLowerCase();
     if (q) {
       arr = arr.filter((o) => {
@@ -312,14 +308,14 @@ removeFilterChip(kind: "estado" | "origen" | "fecha", value?: PedidoEstado) {
       });
     }
 
-    // estados
+
     if (this.filters.estados.size) {
       arr = arr.filter((o) =>
         this.filters.estados.has((o.estado || "").toLowerCase() as PedidoEstado)
       );
     }
 
-    // origen
+
     if (this.filters.origen !== "todos") {
       arr = arr.filter((o) => {
         const hasPhone = !!(o.numero_celular && (o.numero_celular + "").replace(/\D/g, "").length >= 7);
@@ -327,7 +323,7 @@ removeFilterChip(kind: "estado" | "origen" | "fecha", value?: PedidoEstado) {
       });
     }
 
-    // fecha
+
     if (this.filters.fecha !== "todas") {
       const now = new Date();
       const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -340,7 +336,7 @@ removeFilterChip(kind: "estado" | "origen" | "fecha", value?: PedidoEstado) {
 
     this.filtered = arr as PedidoVm[];
 
-    // agrupar por fecha
+  
     const byDate = new Map<string, { label: string; items: PedidoVm[]; epoch: number }>();
     for (const o of arr) {
       const d = this.asDate((o as any).fecha);
@@ -364,7 +360,7 @@ removeFilterChip(kind: "estado" | "origen" | "fecha", value?: PedidoEstado) {
       .sort((a, b) => b.epoch - a.epoch);
   }
 
-  // ---------- Resúmenes para el “root” del modal ----------
+  
   estadoSummary(): string {
     const arr = Array.from(this.filters.estados);
     if (!arr.length) return "";
@@ -381,7 +377,7 @@ removeFilterChip(kind: "estado" | "origen" | "fecha", value?: PedidoEstado) {
     return (m as any)[this.filters.fecha] || "";
   }
 
-  // ---------- Fecha helpers ----------
+ 
   asDate(dateLike?: string): Date {
     if (!dateLike) return new Date();
     const t = dateLike.includes("T") ? dateLike : dateLike.replace(" ", "T");
@@ -405,7 +401,7 @@ removeFilterChip(kind: "estado" | "origen" | "fecha", value?: PedidoEstado) {
     return days[d.getDay()];
   }
 
-  // ---------- UI helpers ----------
+  
   statusClass(est?: PedidoEstado) {
     const e = (est || "").toLowerCase();
     return { status: true, pending: e === "pendiente", confirmed: e === "confirmado",

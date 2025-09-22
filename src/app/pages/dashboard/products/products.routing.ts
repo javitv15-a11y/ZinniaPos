@@ -5,7 +5,7 @@ import { ProductAddComponent } from "./components/product-add/product-add.compon
 import { ProductCategoryComponent } from "./components/product-category/product-category.component";
 
 export const productsRoutes: Routes = [
-  // /products  ->  /products/product-management
+  
   { path: "", redirectTo: "product-management", pathMatch: "full" },
 
   {
@@ -22,7 +22,7 @@ export const productsRoutes: Routes = [
   { path: "product-add", component: ProductAddComponent },
   { path: "product-category", component: ProductCategoryComponent },
 
-  // 🔹 Detalle (hijo directo de /products)
+ 
   {
     path: ":id",
     loadComponent: () =>
@@ -30,6 +30,6 @@ export const productsRoutes: Routes = [
         .then((m) => m.ProductDetailComponent),
   },
 
-  // Alias por si quedó el typo en algún enlace antiguo
+ 
   { path: "product-managament", redirectTo: "product-management", pathMatch: "full" },
 ];

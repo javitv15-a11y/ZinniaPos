@@ -6,7 +6,7 @@
   background: var(--ion-color-primary-contrast);
 }
 
-/* Imagen */
+
 .image-box {
   width: 100%;
   aspect-ratio: 16/9;
@@ -42,7 +42,7 @@ ion-input { margin-bottom: 8px; }
 }
 .step-btn { --border-radius: 8px; }
 
-/* Thumbs */
+
 .thumbs {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -71,17 +71,17 @@ ion-input { margin-bottom: 8px; }
   color: #fff;
 }
 
-/* Items de selección */
+
 .select-item {
   border-radius: 10px;
   --min-height: 50px;
   margin-top: 4px;
 }
 
-/* Footer */
+
 ion-footer { padding: 24px; }
 
-/* Bottom sheet look */
+
 .sheet { --border-radius: 16px 16px 0 0; }
 .sheet-header {
   display: grid;

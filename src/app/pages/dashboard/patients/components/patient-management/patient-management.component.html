@@ -14,7 +14,7 @@
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <!-- Buscador -->
+
   <div class="search-wrap">
     <ion-searchbar
       class="search"
@@ -25,7 +25,7 @@
     </ion-searchbar>
   </div>
 
-  <!-- Cargando -->
+
   <ng-container *ngIf="loading; else loaded">
     <ion-list>
       <ion-item *ngFor="let i of [1,2,3,4,5,6]">
@@ -38,7 +38,7 @@
   </ng-container>
 
   <ng-template #loaded>
-    <!-- Error -->
+
     <ion-card *ngIf="error">
       <ion-card-header>
         <ion-card-title>Error</ion-card-title>
@@ -49,7 +49,7 @@
       </ion-card-content>
     </ion-card>
 
-    <!-- Lista -->
+
     <ng-container *ngIf="!error">
       <ion-list *ngIf="filtered.length; else empty">
         <ion-item
@@ -82,7 +82,7 @@
         </ion-item>
       </ion-list>
 
-      <!-- Vacío -->
+
       <ng-template #empty>
         <div class="empty">
           <img class="hero-img" src="assets/images/customers-patients.png" alt="Pacientes" />

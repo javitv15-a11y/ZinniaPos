@@ -258,7 +258,7 @@ ion-footer {
 
 ion-item.disabled {
   opacity: 0.55;
-  pointer-events: none; /* por si quieres bloquear totalmente el click */
+  pointer-events: none; 
 }
 
 .product-footer .quantity-input {
@@ -273,7 +273,7 @@ ion-item.disabled {
 .product-footer .quantity-input .input { grid-column: 1; }
 .product-footer .quantity-input .controls { grid-column: 2; }
 
-/* el stock ocupa toda la fila de abajo */
+
 .product-footer .quantity-input .stock-hint.under-controls {
   grid-column: 1 / -1;
   margin-top: 6px;

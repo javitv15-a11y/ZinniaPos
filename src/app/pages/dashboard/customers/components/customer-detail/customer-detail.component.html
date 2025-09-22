@@ -18,7 +18,6 @@
   </ion-refresher>
 
   <ng-container *ngIf="loading; else loaded">
-    <!-- skeletons simples -->
     <div class="box"><ion-skeleton-text animated style="width: 60%; height: 18px"></ion-skeleton-text></div>
     <div class="box"><ion-skeleton-text animated style="width: 80%; height: 18px"></ion-skeleton-text></div>
   </ng-container>
@@ -33,7 +32,6 @@
     </ion-card>
 
     <ng-container *ngIf="!error">
-      <!-- Info de contacto -->
       <div class="box" *ngIf="customer">
         <h2 class="section-title">Información de contacto</h2>
 
@@ -45,7 +43,6 @@
         </div>
       </div>
 
-      <!-- Historial -->
       <div class="box">
         <h2 class="section-title">Historial de pedidos</h2>
 

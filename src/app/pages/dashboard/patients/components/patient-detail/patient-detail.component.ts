@@ -10,10 +10,10 @@ type Status = 'Agendada' | 'Completada' | 'Cancelada';
 
 interface Appointment {
   id: string;
-  date: string | Date;  // 2024-10-18
-  start: string;        // "9:00 am"
-  end: string;          // "10:00 am"
-  type: string;         // "Consulta General", etc.
+  date: string | Date;  
+  start: string;       
+  end: string;          
+  type: string;        
   status: Status;
 }
 
@@ -36,7 +36,7 @@ interface PatientDetail {
 export class PatientDetailComponent implements OnInit {
   patient!: PatientDetail;
 
-  // clases para el chip
+  
   statusClassMap: Record<Status, string> = {
     Agendada:   'status status--agendada',
     Completada: 'status status--completada',
@@ -48,7 +48,7 @@ export class PatientDetailComponent implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id') || '';
 
-    // DEMO simple por id (cámbialo luego por servicio real)
+    
     const map: Record<string, PatientDetail> = {
       P001: DEMO_PATIENT_1,
       P002: DEMO_PATIENT_2,
@@ -62,7 +62,7 @@ export class PatientDetailComponent implements OnInit {
   trackByAppt(_: number, a: Appointment) { return a.id; }
 }
 
-// ===== DEMO =====
+
 const DEMO_PATIENT_1: PatientDetail = {
   id: 'P001',
   nombre: 'Juan Pérez',

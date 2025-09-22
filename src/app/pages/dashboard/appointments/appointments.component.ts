@@ -12,7 +12,6 @@ import { MenuHeaderComponent } from 'src/app/shared/components/menu-header/menu-
   imports: [
     CommonModule,
     IonicModule,
-    MenuHeaderComponent
   ],
   providers: [
     ModalController

@@ -10,7 +10,6 @@
 </ion-header>
 
 <ion-content fullscreen="true">
-  <!-- 🔎 Search + botón de filtros -->
   <div class="search-card">
     <div class="search-row search-with-pill">
       <ion-searchbar
@@ -21,7 +20,6 @@
         (ionInput)="applyQueryFilter()">
       </ion-searchbar>
 
-      <!-- pill incrustado -->
       <ion-button
         class="filters-pill"
         fill="clear"
@@ -34,7 +32,7 @@
       </ion-button>
     </div>
 
-    <!-- chips de filtros activos -->
+ 
     <div class="chips" *ngIf="activeFiltersCount">
       <ion-chip *ngFor="let e of estadosArray" outline="true">
         <ion-label>{{ e | titlecase }}</ion-label>
@@ -60,7 +58,7 @@
     </div>
   </div>
 
-  <!-- Skeletons -->
+
   <ng-container *ngIf="loading; else loaded">
     <ion-list>
       <ion-item *ngFor="let i of [1,2,3,4,5,6]">
@@ -85,7 +83,6 @@
     </ion-card>
 
     <ng-container *ngIf="!error">
-      <!-- Lista agrupada por fecha -->
       <ng-container *ngIf="grouped.length; else empty">
         <ng-container *ngFor="let g of grouped">
           <ion-list>
@@ -136,14 +133,12 @@
     </ng-container>
   </ng-template>
 
-  <!-- ========== MODAL DE FILTROS CON NAVEGACIÓN (como el mock) ========== -->
   <ion-modal [isOpen]="isFiltersModalOpen" (didDismiss)="closeFilters()"
     breakpoints="[0, 0.5, 0.9]" initialBreakpoint="0.5">
     <ng-template>
       <ion-header>
         <ion-toolbar>
           <ion-buttons slot="start">
-            <!-- cerrar en root / volver en subpáginas -->
             <ion-button *ngIf="filtersPage==='root'; else backBtn"
               (click)="closeFilters()">
               <ion-icon slot="icon-only" name="close-outline"></ion-icon>
@@ -159,7 +154,6 @@
           <ion-title>Filtrar por</ion-title>
 
           <ion-buttons slot="end">
-            <!-- reset en root / aplicar en subpáginas -->
             <ion-button *ngIf="filtersPage==='root'; else applyBtn"
               (click)="clearAllFilters()">
               <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
@@ -175,7 +169,6 @@
 
       <ion-content>
 
-        <!-- ROOT: 3 filas con resumen y chevron -->
         <ng-container *ngIf="filtersPage==='root'">
           <ion-list lines="full">
             <ion-item button detail (click)="openFiltersPage('estado')">
@@ -201,7 +194,6 @@
           </ion-list>
         </ng-container>
 
-        <!-- SUBPÁGINA: ESTADO -->
         <ng-container *ngIf="filtersPage==='estado'">
           <ion-list lines="full">
             <ion-list-header>Estado</ion-list-header>
@@ -240,7 +232,6 @@
           </ion-list>
         </ng-container>
 
-        <!-- SUBPÁGINA: ORIGEN -->
         <ng-container *ngIf="filtersPage==='origen'">
           <ion-list lines="full">
             <ion-list-header>Origen</ion-list-header>
@@ -262,7 +253,6 @@
           </ion-list>
         </ng-container>
 
-        <!-- SUBPÁGINA: FECHA -->
         <ng-container *ngIf="filtersPage==='fecha'">
           <ion-list lines="full">
             <ion-list-header>Fecha de actualización</ion-list-header>
@@ -291,5 +281,4 @@
       </ion-content>
     </ng-template>
   </ion-modal>
-  <!-- ===================================================== -->
 </ion-content>

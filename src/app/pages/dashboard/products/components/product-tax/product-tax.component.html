@@ -36,7 +36,6 @@
 
       <div class="row">
         <div class="group">
-          <!-- Abre el bottom sheet -->
           <ion-item button detail="true" (click)="openTypeSheet()"
                     class="type-item" lines="none">
             <ion-label>
@@ -63,7 +62,7 @@
   </ion-button>
 </ion-footer>
 
-<!-- ===== Bottom sheet: Tipo de impuesto ===== -->
+
 <ion-modal
   [isOpen]="isTypeSheetOpen"
   (didDismiss)="closeTypeSheet()"

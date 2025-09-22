@@ -70,7 +70,6 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
 
   private sub?: Subscription;
 
-  // ===== Modal de edición =====
   editOpen = false;
   edit: any = {
     nombre: "",
@@ -85,7 +84,6 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     impuesto: "",
   };
 
-  // ===== Categorías (API & cache) =====
   private readonly CATEGORIES_URL =
     "https://codigofuentecorp.eastus.cloudapp.azure.com/zinnia-apis-php/public/categorias";
   private categoriesCache: Array<{ id: string; nombre: string }> | null = null;
@@ -105,12 +103,12 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     this.sub?.unsubscribe();
   }
 
-  // ===== Utils =====
   private toNumber(v: any): number {
     if (v === null || v === undefined || v === "") return 0;
     if (typeof v === "number") return isFinite(v) ? v : 0;
     const s = String(v).trim();
-    const hasComma = s.includes(","), hasDot = s.includes(".");
+    const hasComma = s.includes(","),
+      hasDot = s.includes(".");
     let normalized = s;
     if (hasComma && hasDot) normalized = s.replace(/\./g, "").replace(",", ".");
     else if (hasComma) normalized = s.replace(",", ".");
@@ -119,12 +117,29 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   }
   private statusToText(v: any): Status {
     const k = String(v ?? "").toLowerCase();
-    if (v === true || v === 1 || k === "1" || k === "true" || k.includes("activo") || k === "active") return "Activo";
-    if (v === false || v === 0 || k === "0" || k === "false" || k.includes("inactivo") || k === "inactive") return "Inactivo";
+    if (
+      v === true ||
+      v === 1 ||
+      k === "1" ||
+      k === "true" ||
+      k.includes("activo") ||
+      k === "active"
+    )
+      return "Activo";
+    if (
+      v === false ||
+      v === 0 ||
+      k === "0" ||
+      k === "false" ||
+      k.includes("inactivo") ||
+      k === "inactive"
+    )
+      return "Inactivo";
     return "Activo";
   }
   private firstNonEmpty<T = any>(...vals: T[]): T | null {
-    for (const v of vals) if (v !== undefined && v !== null && v !== "") return v;
+    for (const v of vals)
+      if (v !== undefined && v !== null && v !== "") return v;
     return null;
   }
   private collectImages(p: any): string[] {
@@ -134,7 +149,12 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
         Array.isArray(p?.images) ? p.images : null,
         Array.isArray(p?.fotos) ? p.fotos : null
       ) || [];
-    const single = this.firstNonEmpty<string>(p?.imagen, p?.image, p?.url_imagen, p?.urlImagen);
+    const single = this.firstNonEmpty<string>(
+      p?.imagen,
+      p?.image,
+      p?.url_imagen,
+      p?.urlImagen
+    );
     const out: string[] = [];
     if (arr?.length) out.push(...arr.filter(Boolean));
     if (single) out.push(single);
@@ -143,23 +163,73 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
 
   private mapToUI(p: ProductApi): UIProductDetail {
     const anyP: any = p;
-    const name = this.firstNonEmpty(anyP.nombre, anyP.name, anyP.titulo, anyP.title, "Producto") as string;
-    const description = this.firstNonEmpty(anyP.descripcion, anyP.description, anyP.detalle, anyP.observaciones) as string | null;
-    const salePrice = this.toNumber(this.firstNonEmpty(anyP.precio_venta, anyP.precioVenta, anyP.precio, anyP.price, anyP.pvp, 0));
-    const costPrice = this.toNumber(this.firstNonEmpty(anyP.precio_costo, anyP.precioCosto, anyP.costo, anyP.cost, 0));
-    const stockActual = this.toNumber(this.firstNonEmpty(anyP.stock_actual, anyP.stock, anyP.existencias, anyP.cantidad, 0));
-    const stockMin = this.toNumber(this.firstNonEmpty(anyP.stock_minimo, anyP.stockMin, anyP.stock_min, 0));
+    const name = this.firstNonEmpty(
+      anyP.nombre,
+      anyP.name,
+      anyP.titulo,
+      anyP.title,
+      "Producto"
+    ) as string;
+    const description = this.firstNonEmpty(
+      anyP.descripcion,
+      anyP.description,
+      anyP.detalle,
+      anyP.observaciones
+    ) as string | null;
+    const salePrice = this.toNumber(
+      this.firstNonEmpty(
+        anyP.precio_venta,
+        anyP.precioVenta,
+        anyP.precio,
+        anyP.price,
+        anyP.pvp,
+        0
+      )
+    );
+    const costPrice = this.toNumber(
+      this.firstNonEmpty(
+        anyP.precio_costo,
+        anyP.precioCosto,
+        anyP.costo,
+        anyP.cost,
+        0
+      )
+    );
+    const stockActual = this.toNumber(
+      this.firstNonEmpty(
+        anyP.stock_actual,
+        anyP.stock,
+        anyP.existencias,
+        anyP.cantidad,
+        0
+      )
+    );
+    const stockMin = this.toNumber(
+      this.firstNonEmpty(anyP.stock_minimo, anyP.stockMin, anyP.stock_min, 0)
+    );
     const providerName = this.firstNonEmpty(
-      anyP.proveedor_nombre, anyP.provider_name, anyP.proveedor?.nombre, anyP.proveedor?.name, anyP.provider?.nombre, anyP.provider?.name
+      anyP.proveedor_nombre,
+      anyP.provider_name,
+      anyP.proveedor?.nombre,
+      anyP.proveedor?.name,
+      anyP.provider?.nombre,
+      anyP.provider?.name
     ) as string | null;
     const categoryName = this.firstNonEmpty(
-      anyP.categoria_nombre, anyP.category_name, anyP.categoria?.nombre, anyP.categoria?.name, anyP.category?.nombre, anyP.category?.name
+      anyP.categoria_nombre,
+      anyP.category_name,
+      anyP.categoria?.nombre,
+      anyP.categoria?.name,
+      anyP.category?.nombre,
+      anyP.category?.name
     ) as string | null;
 
     return {
       id: String(anyP.id ?? anyP._id ?? anyP.codigo ?? ""),
       name,
-      status: this.statusToText(this.firstNonEmpty(anyP.estado, anyP.status, anyP.activo, true)),
+      status: this.statusToText(
+        this.firstNonEmpty(anyP.estado, anyP.status, anyP.activo, true)
+      ),
       description,
       salePrice,
       costPrice,
@@ -171,13 +241,15 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     };
   }
 
-  // ===== Carga =====
+ 
   async loadProduct(id: string) {
     this.loading = true;
     this.error = undefined;
     try {
       let apiProduct: ProductApi | undefined;
-      try { apiProduct = await this.productsSrv.getById(id); } catch {}
+      try {
+        apiProduct = await this.productsSrv.getById(id);
+      } catch {}
 
       if (!apiProduct || !apiProduct.id) {
         const list = await this.productsSrv.getAll();
@@ -189,15 +261,19 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       this.product = this.mapToUI(apiProduct);
       this.selectedIndex = 0;
 
-      // Galería desde endpoint con fallback
-      const imgs = await this.productsSrv.getImages({ id: apiProduct.id, idunico: apiProduct.idunico });
+      const imgs = await this.productsSrv.getImages({
+        id: apiProduct.id,
+        idunico: apiProduct.idunico,
+      });
       if (imgs?.length) this.product.images = imgs;
       else {
-        const cover = await this.productsSrv.getCoverUrl({ id: apiProduct.id, idunico: apiProduct.idunico });
+        const cover = await this.productsSrv.getCoverUrl({
+          id: apiProduct.id,
+          idunico: apiProduct.idunico,
+        });
         if (cover) this.product.images = [cover];
       }
 
-      // Si no vino el nombre de categoría, resolverlo con la API por categoria_id
       await this.ensureCategoryName();
     } catch (e: any) {
       this.error = e?.message || "No se pudo cargar el producto";
@@ -207,7 +283,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     }
   }
 
-  /** Resuelve el nombre de la categoría usando categoria_id (API) */
+
   private async ensureCategoryName() {
     if (!this.product) return;
     if (this.product.categoryName) return;
@@ -223,9 +299,12 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     if (this.product?.id) this.loadProduct(this.product.id);
   }
 
-  // ===== Acciones UI =====
-  selectImage(i: number) { this.selectedIndex = i; }
-  triggerUpload() { this.fileInput?.nativeElement?.click(); }
+  selectImage(i: number) {
+    this.selectedIndex = i;
+  }
+  triggerUpload() {
+    this.fileInput?.nativeElement?.click();
+  }
 
   async handleUpload(ev: Event) {
     const file = (ev.target as HTMLInputElement).files?.[0];
@@ -236,15 +315,22 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       header: "Subir imagen",
       message: `<div style="display:flex;justify-content:center;"><img src="${blobUrl}" style="max-width:220px;border-radius:8px"/></div>¿Deseas subir esta imagen?`,
       buttons: [
-        { text: "Cancelar", role: "cancel", handler: () => URL.revokeObjectURL(blobUrl) },
+        {
+          text: "Cancelar",
+          role: "cancel",
+          handler: () => URL.revokeObjectURL(blobUrl),
+        },
         {
           text: "Subir",
           handler: async () => {
             try {
-              const target = (this.apiProduct as any)?.idunico || this.product!.id;
+              const target =
+                (this.apiProduct as any)?.idunico || this.product!.id;
               await this.productsSrv.uploadImages(target, [file]);
-              // 🔔 notificar (por si en el service futuro no emite)
-              this.productsSrv.notifyProductChanged(this.product!.id, "image_uploaded");
+              this.productsSrv.notifyProductChanged(
+                this.product!.id,
+                "image_uploaded"
+              );
               await this.presentToast("Imagen subida");
               await this.loadProduct(this.product!.id);
             } catch {
@@ -266,7 +352,11 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       message: `<div style="display:flex;justify-content:center;"><img src="${imgUrl}" style="max-width:220px;border-radius:8px"/></div>¿Deseas eliminar esta imagen?`,
       buttons: [
         { text: "Cancelar", role: "cancel" },
-        { text: "Eliminar", role: "destructive", handler: () => this.deleteImage(imgUrl) },
+        {
+          text: "Eliminar",
+          role: "destructive",
+          handler: () => this.deleteImage(imgUrl),
+        },
       ],
     });
     await alert.present();
@@ -281,7 +371,6 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       );
       await this.presentToast(ok ? "Imagen eliminada" : "No se pudo eliminar");
       if (ok) {
-        // 🔔 notificar
         this.productsSrv.notifyProductChanged(this.product.id, "image_deleted");
         this.loadProduct(this.product.id);
       }
@@ -289,13 +378,18 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       await this.presentToast(e?.message || "No se pudo eliminar");
     }
   }
-
-  /** Edita SOLO el stock */
   async editInventory() {
     if (!this.product) return;
     const alert = await this.alertCtrl.create({
       header: "Actualizar stock",
-      inputs: [{ name: "stock", type: "number", value: String(this.product.stockActual), placeholder: "Stock" }],
+      inputs: [
+        {
+          name: "stock",
+          type: "number",
+          value: String(this.product.stockActual),
+          placeholder: "Stock",
+        },
+      ],
       buttons: [
         { text: "Cancelar", role: "cancel" },
         {
@@ -304,8 +398,11 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
             const n = this.toNumber(data.stock);
             try {
               await this.productsSrv.updateStock(this.product!.id, n);
-              // 🔔 notificar
-              this.productsSrv.notifyProductChanged(this.product!.id, "stock_updated", { stock: n });
+              this.productsSrv.notifyProductChanged(
+                this.product!.id,
+                "stock_updated",
+                { stock: n }
+              );
               await this.presentToast("Stock actualizado");
               await this.loadProduct(this.product!.id);
             } catch (e: any) {
@@ -318,7 +415,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     await alert.present();
   }
 
-  // ===== Modal Editar =====
+
   openEdit() {
     if (!this.product || !this.apiProduct) return;
     this.edit = {
@@ -336,7 +433,9 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     this.editOpen = true;
   }
 
-  closeEdit() { this.editOpen = false; }
+  closeEdit() {
+    this.editOpen = false;
+  }
 
   async saveEdit() {
     if (!this.product || !this.apiProduct) return;
@@ -345,7 +444,8 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     const toMoneyStr = (v: any): string => {
       if (v === null || v === undefined || v === "") return "0.00";
       const s = String(v).trim();
-      const hasComma = s.includes(","), hasDot = s.includes(".");
+      const hasComma = s.includes(","),
+        hasDot = s.includes(".");
       let nStr = s;
       if (hasComma && hasDot) nStr = s.replace(/\./g, "").replace(",", ".");
       else if (hasComma) nStr = s.replace(",", ".");
@@ -358,7 +458,10 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       return isFinite(n) ? String(n) : "0";
     };
 
-    const imagenes = (this.product?.images ?? []).map((url) => ({ filename: this.filenameFromUrl(url), url }));
+    const imagenes = (this.product?.images ?? []).map((url) => ({
+      filename: this.filenameFromUrl(url),
+      url,
+    }));
     const portada = this.heroImage || this.product?.images?.[0] || "";
 
     const payload: Record<string, any> = {
@@ -369,9 +472,15 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       precio_costo: toMoneyStr(this.edit.precio_costo),
       precio_venta: toMoneyStr(this.edit.precio_venta),
       stock: toIntStr(this.edit.stock),
-      categoria_id: String(this.edit.categoria_id ?? this.apiProduct!.categoria_id ?? ""),
-      proveedor_id: String(this.edit.proveedor_id ?? this.apiProduct!.proveedor_id ?? ""),
-      impuesto: toMoneyStr(this.edit.impuesto ?? this.apiProduct!.impuesto ?? 0),
+      categoria_id: String(
+        this.edit.categoria_id ?? this.apiProduct!.categoria_id ?? ""
+      ),
+      proveedor_id: String(
+        this.edit.proveedor_id ?? this.apiProduct!.proveedor_id ?? ""
+      ),
+      impuesto: toMoneyStr(
+        this.edit.impuesto ?? this.apiProduct!.impuesto ?? 0
+      ),
       imagenes,
       imagen_portada_url: portada,
     };
@@ -383,27 +492,36 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
 
     try {
       await this.productsSrv.update(id, payload);
-      // 🔔 notificar
       this.productsSrv.notifyProductChanged(id, "updated", { payload });
       await this.presentToast("Producto actualizado");
       this.closeEdit();
       await this.loadProduct(id);
     } catch (e: any) {
-      await this.presentToast(e?.message || "No se pudo actualizar el producto");
+      await this.presentToast(
+        e?.message || "No se pudo actualizar el producto"
+      );
     }
   }
 
-  // ===== Categorías API =====
-  private async getCategoriesFromApi(): Promise<Array<{ id: string; nombre: string }>> {
+  private async getCategoriesFromApi(): Promise<
+    Array<{ id: string; nombre: string }>
+  > {
     if (this.categoriesCache) return this.categoriesCache;
     try {
       const res = await fetch(this.CATEGORIES_URL, { method: "GET" });
       if (!res.ok) throw new Error("HTTP " + res.status);
       const data = await res.json();
-      const list: Array<{ id: string; nombre: string }> = (Array.isArray(data) ? data : [])
+      const list: Array<{ id: string; nombre: string }> = (
+        Array.isArray(data) ? data : []
+      )
         .map((raw: any) => {
-          const id = String(raw?.id ?? raw?.categoria_id ?? raw?._id ?? raw?.codigo ?? "");
-          const nombre = (String(raw?.nombre ?? raw?.name ?? raw?.titulo ?? raw?.title ?? "").trim() || "Sin nombre");
+          const id = String(
+            raw?.id ?? raw?.categoria_id ?? raw?._id ?? raw?.codigo ?? ""
+          );
+          const nombre =
+            String(
+              raw?.nombre ?? raw?.name ?? raw?.titulo ?? raw?.title ?? ""
+            ).trim() || "Sin nombre";
           return { id, nombre };
         })
         .filter((x) => x.id !== "");
@@ -426,11 +544,13 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       },
     }));
     buttons.push({ text: "Cancelar", role: "cancel" });
-    const sheet = await this.actionSheet.create({ header: "Seleccionar categoría", buttons });
+    const sheet = await this.actionSheet.create({
+      header: "Seleccionar categoría",
+      buttons,
+    });
     await sheet.present();
   }
 
-  // (DEMO) proveedores
   async chooseProvider() {
     const opciones = [
       { id: "10", nombre: "Proveedor Tecnología" },
@@ -445,31 +565,51 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       },
     }));
     buttons.push({ text: "Cancelar", role: "cancel" });
-    const sheet = await this.actionSheet.create({ header: "Seleccionar proveedor", buttons });
+    const sheet = await this.actionSheet.create({
+      header: "Seleccionar proveedor",
+      buttons,
+    });
     await sheet.present();
   }
 
   private filenameFromUrl(url: string): string {
-    try { return String(url).split("?")[0].split("/").pop() || String(url); }
-    catch { return String(url); }
+    try {
+      return String(url).split("?")[0].split("/").pop() || String(url);
+    } catch {
+      return String(url);
+    }
   }
 
   async openMore() {
     const sheet = await this.actionSheet.create({
       header: "Acciones",
       buttons: [
-        { text: "Editar", icon: "create-outline", handler: () => this.openEdit() },
-        { text: "Compartir", icon: "share-social-outline", handler: () => this.share() },
+        {
+          text: "Editar",
+          icon: "create-outline",
+          handler: () => this.openEdit(),
+        },
+        {
+          text: "Compartir",
+          icon: "share-social-outline",
+          handler: () => this.share(),
+        },
         { text: "Cancelar", role: "cancel" },
       ],
     });
     await sheet.present();
   }
 
-  async share() { await this.presentToast("Compartido (demo)"); }
+  async share() {
+    await this.presentToast("Compartido (demo)");
+  }
 
   private async presentToast(message: string) {
-    const t = await this.toastCtrl.create({ message, duration: 1600, position: "bottom" });
+    const t = await this.toastCtrl.create({
+      message,
+      duration: 1600,
+      position: "bottom",
+    });
     await t.present();
   }
 }

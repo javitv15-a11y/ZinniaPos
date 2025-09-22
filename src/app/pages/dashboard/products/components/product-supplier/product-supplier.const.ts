@@ -1,7 +1,7 @@
 // src/app/pages/dashboard/products/components/product-category/product-category.consts.ts
 export const settingHeader = {
   title: 'Nuevo proveedor',
-  interface: 'modal',   // o 'page', según tu HeaderComponent
+  interface: 'modal',   
   showMenu: false,
   showBack: true,
   showActions: true,

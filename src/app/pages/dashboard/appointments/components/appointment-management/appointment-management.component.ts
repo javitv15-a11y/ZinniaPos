@@ -8,7 +8,6 @@ import { IonicModule, MenuController } from "@ionic/angular";
 import { Router } from "@angular/router";
 
 import {
-  // OJO: si tu archivo es appointments.service.ts usa el import en plural:
   AppointmentsService,
   AppointmentApi,
   CitaEstado,
@@ -22,7 +21,6 @@ type Origen = "whatsapp" | "app" | "web" | "tel";
 export interface AppointmentUI {
   id: string;
   paciente: string;
-  /** Siempre Date (o null) para evitar “Invalid time value” */
   date: Date | null;
   start: string;
   end: string;
@@ -47,20 +45,18 @@ export class AppointmentManagementComponent implements OnInit {
     private router: Router
   ) {}
 
-  // UI state
+
   loading = false;
   error?: string;
 
-  // búsqueda / filtros
+
   query = "";
   activeFilter: string | null = null;
 
-  // data
   appointments: AppointmentUI[] = [];
   filtered: AppointmentUI[] = [];
   grouped: { label: string; items: AppointmentUI[] }[] = [];
 
-  // opciones de filtro
   statusOptions: Status[] = ["Agendada", "Completada", "Cancelada"];
   origenOptions: Origen[] = ["whatsapp", "app", "web", "tel"];
   updatedDateOptions = [
@@ -70,19 +66,19 @@ export class AppointmentManagementComponent implements OnInit {
     { label: "Todo", value: "todo" as const },
   ];
 
-  // selección
+
   selectedStatuses = new Set<Status>();
   selectedOrigen = new Set<Origen>();
   dateFilter: "hoy" | "7d" | "30d" | "todo" = "todo";
 
-  // clases de estado
+
   public statusClassMap: Record<Status, string> = {
     Agendada: "status--agendada",
     Completada: "status--completada",
     Cancelada: "status--cancelada",
   };
 
-  // skeleton helper
+
   skeletons = Array.from({ length: 5 });
 
   ngOnInit(): void {
@@ -111,15 +107,15 @@ export class AppointmentManagementComponent implements OnInit {
     this.onCreate();
   }
 
-  // ====== Map backend → UI ======
+ 
   private toUI = (a: AppointmentApi): AppointmentUI => {
     const status = this.mapStatus(a.estado);
 
-    // hora segura (pueden venir vacías)
+ 
     const start = ((a.hora_inicio ?? "").match(/^\d{2}:\d{2}/)?.[0] ?? "00:00");
     const end   = ((a.hora_fin ?? "").match(/^\d{2}:\d{2}/)?.[0] ?? "00:00");
 
-    // fecha segura (si no hay, null)
+    
     const date =
       this.safeDateFromParts(a.fecha, start) ??
       this.safeDate(a.fecha) ??
@@ -148,7 +144,7 @@ export class AppointmentManagementComponent implements OnInit {
     return "Agendada";
   }
 
-  // ====== Menu control ======
+
   openFilters()  { this.menuCtrl.open("filters"); }
   closeFilters() { this.menuCtrl.close("filters"); }
 
@@ -163,7 +159,7 @@ export class AppointmentManagementComponent implements OnInit {
     this.closeFilters();
   }
 
-  // ====== Filtros / búsqueda ======
+  
   applyFilter() {
     const q = this.query.trim().toLowerCase();
 
@@ -191,7 +187,7 @@ export class AppointmentManagementComponent implements OnInit {
       if (this.dateFilter === "30d")  from.setDate(today.getDate() - 30);
 
       out = out.filter((a) => {
-        const ref = a.updatedAt ?? a.date; // ya son Date|null
+        const ref = a.updatedAt ?? a.date; 
         if (!ref) return false;
         return this.startOfDay(ref).getTime() >= from.getTime();
       });
@@ -225,7 +221,7 @@ export class AppointmentManagementComponent implements OnInit {
   clearSearch() { this.query = ""; this.applyFilter(); }
   clearFilter() { this.resetFilters(); }
 
-  // ====== Helpers UI ======
+
   open(a: AppointmentUI) {
     console.log("Abrir cita", a);
   }
@@ -240,7 +236,7 @@ export class AppointmentManagementComponent implements OnInit {
 
   trackById(_: number, a: AppointmentUI) { return a.id; }
 
-  // ====== Fecha segura ======
+
   private safeDate(x?: string | Date | null): Date | null {
     if (!x) return null;
     if (x instanceof Date) return isNaN(x.getTime()) ? null : x;

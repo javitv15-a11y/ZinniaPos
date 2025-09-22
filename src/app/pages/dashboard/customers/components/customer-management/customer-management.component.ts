@@ -45,9 +45,11 @@ export class CustomerManagementComponent implements OnInit {
   filtered: ClienteUI[] = [];
   query = "";
 
-  // control de hidratación
   private hydrating = false;
-  private resumenCache = new Map<string, { total: number; last: Date | null }>();
+  private resumenCache = new Map<
+    string,
+    { total: number; last: Date | null }
+  >();
 
   constructor(
     private clientesSrv: ClientesService,
@@ -64,11 +66,10 @@ export class CustomerManagementComponent implements OnInit {
     this.error = undefined;
 
     try {
-      const raw = await this.clientesSrv.getClientes(); // ← tu servicio de clientes
-      this.clientes = (raw ?? []).map(this.mapClienteBase); // pinta rápido
+      const raw = await this.clientesSrv.getClientes();
+      this.clientes = (raw ?? []).map(this.mapClienteBase);
       this.applyFilter();
 
-      // hidrata pedidos en segundo plano (sin bloquear)
       setTimeout(() => this.hydrateInBatches(), 0);
     } catch (e: any) {
       this.error = e?.message || "Error al cargar clientes";
@@ -78,7 +79,6 @@ export class CustomerManagementComponent implements OnInit {
     }
   }
 
-  // ===== Normalización mínima (rápida) =====
   private mapClienteBase = (c: ClienteApi): ClienteUI => {
     const correo = String((c as any).correo ?? (c as any).email ?? "").trim();
     const telefono = String(
@@ -88,7 +88,6 @@ export class CustomerManagementComponent implements OnInit {
     const isoReg = (c as any).fecha_registro?.toString()?.replace?.(" ", "T");
     const fr = isoReg ? new Date(isoReg) : undefined;
 
-    // si ya vienen agregados desde el backend, úsalos
     const rawCount =
       (c as any).pedidosCount ??
       (c as any).pedidos ??
@@ -118,12 +117,11 @@ export class CustomerManagementComponent implements OnInit {
     };
   };
 
-  // ===== Hidratar pedidos por lotes con fallback por teléfono =====
   private async hydrateInBatches() {
     if (this.hydrating) return;
     this.hydrating = true;
 
-    const MAX = 4; // concurrencia
+    const MAX = 4;
     const targets = this.clientes
       .map((c, idx) => ({
         idx,
@@ -133,7 +131,6 @@ export class CustomerManagementComponent implements OnInit {
       .filter(
         (x) =>
           x.id &&
-          // Solo clientes que no traen datos agregados
           !(this.clientes[x.idx].pedidosCount > 0) &&
           !this.clientes[x.idx].ultimoPedidoDate
       );
@@ -151,21 +148,18 @@ export class CustomerManagementComponent implements OnInit {
             this.clientes[idx].pedidosCount = cached.total ?? 0;
             this.clientes[idx].ultimoPedidoDate = cached.last ?? null;
           } catch {
-            // ignoramos pero no rompemos la UI
+            
           }
         })
       );
 
-      // refrescar la lista visible
       this.applyFilter();
     }
 
     this.hydrating = false;
   }
 
-  /**
-   * Intenta: getResumenByCliente → getByCliente → por teléfono (si existe método en OrderService)
-   */
+ 
   private async getResumenSafe(
     clienteId: string,
     telefono?: string
@@ -173,7 +167,7 @@ export class CustomerManagementComponent implements OnInit {
     const id = String(clienteId || "").trim();
     if (!id) return { total: 0, last: null };
 
-    // 1) resumen directo si tu OrderService lo implementa
+    
     try {
       const anySrv = this.orderSrv as any;
       if (typeof anySrv.getResumenByCliente === "function") {
@@ -181,10 +175,9 @@ export class CustomerManagementComponent implements OnInit {
         return { total: Number(r?.total ?? 0), last: r?.lastDate ?? null };
       }
     } catch {
-      // seguimos
+     
     }
 
-    // 2) pedidos por cliente → calcula total/última fecha
     try {
       const pedidos: PedidoApi[] = await this.orderSrv.getByCliente(id);
       if (Array.isArray(pedidos) && pedidos.length) {
@@ -196,10 +189,9 @@ export class CustomerManagementComponent implements OnInit {
         return { total: pedidos.length, last };
       }
     } catch {
-      // seguimos
+     
     }
 
-    // 3) fallback por teléfono si existe método y tenemos número
     const cleanPhone = (telefono || "").toString().replace(/\D/g, "");
     if (cleanPhone) {
       const anySrv = this.orderSrv as any;
@@ -227,7 +219,7 @@ export class CustomerManagementComponent implements OnInit {
           return { total: arr.length, last };
         }
       } catch {
-        // nada
+        
       }
     }
 
@@ -241,11 +233,10 @@ export class CustomerManagementComponent implements OnInit {
     return Number.isNaN(d.getTime()) ? null : d;
   }
 
-  // ===== Filtro / búsqueda =====
+ 
   applyFilter() {
     const q = this.query.trim().toLowerCase();
     if (!q) {
-      // fuerza cambio de referencia para refrescar la vista
       this.filtered = [...this.clientes];
       return;
     }
@@ -261,7 +252,6 @@ export class CustomerManagementComponent implements OnInit {
         direccion.includes(q)
       );
     });
-    // cambio de referencia para asegurar detección
     this.filtered = [...this.filtered];
   }
 
@@ -270,7 +260,7 @@ export class CustomerManagementComponent implements OnInit {
     this.applyFilter();
   }
 
-  // ===== Helpers UI =====
+ 
   getId(c: any) {
     return String(c?.id ?? c?.cliente_id ?? c?._id ?? "").trim();
   }
@@ -286,7 +276,6 @@ export class CustomerManagementComponent implements OnInit {
   }
   trackById = (_: number, c: ClienteUI) => this.getId(c) || _;
 
-  // ===== Crear cliente =====
   async onAdd() {
     const modal = await this.modalCtrl.create({
       component: ProductCustomerComponent,

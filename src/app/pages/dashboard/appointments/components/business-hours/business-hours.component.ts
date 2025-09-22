@@ -28,7 +28,6 @@ import { IAppointmentType } from 'src/app/core/interfaces/bussiness/appointments
     HeaderComponent,
     DirectivesModule,
     ReactiveFormsModule,
-    CustomInputComponent
   ],
 })
 export class BusinessHoursComponent implements OnInit {

@@ -15,15 +15,19 @@
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <!-- ===== Skeleton ===== -->
   <ng-container *ngIf="loading; else loaded">
     <div class="gallery">
-      <ion-skeleton-text animated style="width: 100%; height: 220px; border-radius: 14px;"></ion-skeleton-text>
+      <ion-skeleton-text animated
+        style="width: 100%; height: 220px; border-radius: 14px;"></ion-skeleton-text>
       <div class="thumbs">
-        <ion-skeleton-text animated style="width:48px;height:48px;border-radius:10px;"></ion-skeleton-text>
-        <ion-skeleton-text animated style="width:48px;height:48px;border-radius:10px;"></ion-skeleton-text>
-        <ion-skeleton-text animated style="width:48px;height:48px;border-radius:10px;"></ion-skeleton-text>
-        <ion-skeleton-text animated style="width:48px;height:48px;border-radius:10px;"></ion-skeleton-text>
+        <ion-skeleton-text animated
+          style="width:48px;height:48px;border-radius:10px;"></ion-skeleton-text>
+        <ion-skeleton-text animated
+          style="width:48px;height:48px;border-radius:10px;"></ion-skeleton-text>
+        <ion-skeleton-text animated
+          style="width:48px;height:48px;border-radius:10px;"></ion-skeleton-text>
+        <ion-skeleton-text animated
+          style="width:48px;height:48px;border-radius:10px;"></ion-skeleton-text>
       </div>
     </div>
 
@@ -34,7 +38,8 @@
             <ion-skeleton-text animated style="width: 60%"></ion-skeleton-text>
           </h1>
           <ion-chip class="chip">
-            <ion-label><ion-skeleton-text animated style="width: 80px"></ion-skeleton-text></ion-label>
+            <ion-label><ion-skeleton-text animated
+                style="width: 80px"></ion-skeleton-text></ion-label>
           </ion-chip>
         </div>
         <span class="status-pill">
@@ -44,62 +49,70 @@
 
       <div class="block">
         <h3 class="label">Descripción</h3>
-        <p class="value"><ion-skeleton-text animated style="width: 90%"></ion-skeleton-text></p>
+        <p class="value"><ion-skeleton-text animated
+            style="width: 90%"></ion-skeleton-text></p>
       </div>
       <div class="block">
         <h3 class="label">Precio de venta ($)</h3>
-        <p class="value"><ion-skeleton-text animated style="width: 30%"></ion-skeleton-text></p>
+        <p class="value"><ion-skeleton-text animated
+            style="width: 30%"></ion-skeleton-text></p>
       </div>
       <div class="block">
         <h3 class="label">Precio de costo ($)</h3>
-        <p class="value"><ion-skeleton-text animated style="width: 30%"></ion-skeleton-text></p>
+        <p class="value"><ion-skeleton-text animated
+            style="width: 30%"></ion-skeleton-text></p>
       </div>
       <div class="block">
         <h3 class="label">Proveedor</h3>
-        <p class="value"><ion-skeleton-text animated style="width: 55%"></ion-skeleton-text></p>
+        <p class="value"><ion-skeleton-text animated
+            style="width: 55%"></ion-skeleton-text></p>
       </div>
     </div>
   </ng-container>
 
-  <!-- ===== Content ===== -->
   <ng-template #loaded>
     <ng-container *ngIf="product; else errorTpl">
-      <!-- Galería -->
       <div class="gallery">
         <div class="hero-img">
-          <img *ngIf="heroImage; else noImage" [src]="heroImage" alt="Imagen de producto" />
+          <img *ngIf="heroImage; else noImage" [src]="heroImage"
+            alt="Imagen de producto" />
           <ng-template #noImage><div class="noimg"></div></ng-template>
         </div>
 
         <div class="thumbs">
-          <div class="thumb-wrap" *ngFor="let img of product.images; index as i">
-            <button class="thumb" (click)="selectImage(i)" [class.thumb--active]="i === selectedIndex">
+          <div class="thumb-wrap"
+            *ngFor="let img of product.images; index as i">
+            <button class="thumb" (click)="selectImage(i)"
+              [class.thumb--active]="i === selectedIndex">
               <img [src]="img" alt="Miniatura" />
             </button>
-            <button class="thumb-delete" (click)="confirmDeleteImage(img); $event.stopPropagation()" aria-label="Eliminar imagen">
+            <button class="thumb-delete"
+              (click)="confirmDeleteImage(img); $event.stopPropagation()"
+              aria-label="Eliminar imagen">
               <ion-icon name="trash-outline"></ion-icon>
             </button>
           </div>
 
-          <button class="thumb thumb--add" (click)="triggerUpload()" aria-label="Añadir imagen">
+          <button class="thumb thumb--add" (click)="triggerUpload()"
+            aria-label="Añadir imagen">
             <ion-icon name="add-outline"></ion-icon>
           </button>
-          <input #fileInput type="file" accept="image/*" hidden (change)="handleUpload($event)" />
+          <input #fileInput type="file" accept="image/*" hidden
+            (change)="handleUpload($event)" />
         </div>
       </div>
 
-      <!-- Datos -->
       <div class="section">
         <div class="title-row">
           <div class="title-col">
             <h1 class="name">{{ product.name }}</h1>
-            <!-- chip categoría bajo el nombre -->
             <ion-chip class="chip" *ngIf="product.categoryName">
               <ion-label>{{ product.categoryName }}</ion-label>
             </ion-chip>
           </div>
 
-          <span class="status" [ngClass]="product.status === 'Activo' ? 'status--activo' : 'status--inactivo'">
+          <span class="status"
+            [ngClass]="product.status === 'Activo' ? 'status--activo' : 'status--inactivo'">
             {{ product.status }}
           </span>
         </div>
@@ -119,18 +132,17 @@
           <p class="value">{{ product.costPrice | number:'1.2-2' }}</p>
         </div>
 
-        <!-- Proveedor debajo del costo -->
         <div class="block">
           <h3 class="label">Proveedor</h3>
           <p class="value">{{ product.providerName || 'Sin proveedor' }}</p>
         </div>
       </div>
 
-      <!-- Inventario -->
       <div class="inventory">
         <div class="inventory__head">
           <h3>Inventario</h3>
-          <ion-button fill="clear" size="small" (click)="editInventory()">Editar stock</ion-button>
+          <ion-button fill="clear" size="small" (click)="editInventory()">Editar
+            stock</ion-button>
         </div>
 
         <div class="inventory__row">
@@ -154,7 +166,6 @@
     </ng-template>
   </ng-template>
 
-  <!-- ===== Modal Edición ===== -->
   <ion-modal [isOpen]="editOpen" (didDismiss)="closeEdit()" class="edit-modal">
     <ng-template>
       <ion-header class="edit-header">
@@ -178,52 +189,67 @@
       <ion-content class="edit-content ion-padding">
         <div class="gallery">
           <div class="hero-img">
-            <img *ngIf="heroImage; else noImage" [src]="heroImage" alt="Imagen de producto" />
+            <img *ngIf="heroImage; else noImage" [src]="heroImage"
+              alt="Imagen de producto" />
             <ng-template #noImage><div class="noimg"></div></ng-template>
           </div>
 
           <div class="thumbs">
-            <div class="thumb-wrap" *ngFor="let img of product?.images; index as i">
-              <button class="thumb" (click)="selectImage(i)" [class.thumb--active]="i === selectedIndex">
+            <div class="thumb-wrap"
+              *ngFor="let img of product?.images; index as i">
+              <button class="thumb" (click)="selectImage(i)"
+                [class.thumb--active]="i === selectedIndex">
                 <img [src]="img" alt="Miniatura" />
               </button>
-              <button class="thumb-delete" (click)="confirmDeleteImage(img); $event.stopPropagation()" aria-label="Eliminar imagen">
+              <button class="thumb-delete"
+                (click)="confirmDeleteImage(img); $event.stopPropagation()"
+                aria-label="Eliminar imagen">
                 <ion-icon name="trash-outline"></ion-icon>
               </button>
             </div>
 
-            <button class="thumb thumb--add" (click)="triggerUpload()" aria-label="Añadir imagen">
+            <button class="thumb thumb--add" (click)="triggerUpload()"
+              aria-label="Añadir imagen">
               <ion-icon name="add-outline"></ion-icon>
             </button>
-            <input #fileInput type="file" accept="image/*" hidden (change)="handleUpload($event)" />
+            <input #fileInput type="file" accept="image/*" hidden
+              (change)="handleUpload($event)" />
           </div>
         </div>
 
         <form (ngSubmit)="saveEdit()" class="edit-form">
           <div class="field">
             <label class="field__label">Título del producto</label>
-            <ion-input class="field__control" [(ngModel)]="edit.nombre" name="nombre" autocomplete="off" placeholder="Nombre"></ion-input>
+            <ion-input class="field__control" [(ngModel)]="edit.nombre"
+              name="nombre" autocomplete="off" placeholder="Nombre"></ion-input>
           </div>
 
           <div class="field">
             <label class="field__label">Descripción</label>
-            <ion-textarea class="field__control" auto-grow="true" [(ngModel)]="edit.descripcion" name="descripcion" placeholder="Descripción"></ion-textarea>
+            <ion-textarea class="field__control" auto-grow="true"
+              [(ngModel)]="edit.descripcion" name="descripcion"
+              placeholder="Descripción"></ion-textarea>
           </div>
 
           <div class="field">
             <label class="field__label">Precio de costo ($)</label>
-            <ion-input class="field__control" type="number" inputmode="decimal" step="0.01" [(ngModel)]="edit.precio_costo" name="precio_costo" placeholder="0.00"></ion-input>
+            <ion-input class="field__control" type="number" inputmode="decimal"
+              step="0.01" [(ngModel)]="edit.precio_costo" name="precio_costo"
+              placeholder="0.00"></ion-input>
           </div>
 
           <div class="field">
             <label class="field__label">Precio de venta ($)</label>
-            <ion-input class="field__control" type="number" inputmode="decimal" step="0.01" [(ngModel)]="edit.precio_venta" name="precio_venta" placeholder="0.00"></ion-input>
+            <ion-input class="field__control" type="number" inputmode="decimal"
+              step="0.01" [(ngModel)]="edit.precio_venta" name="precio_venta"
+              placeholder="0.00"></ion-input>
           </div>
 
           <button type="button" class="picker" (click)="chooseCategory()">
             <div class="picker__text">
               <div class="picker__label">Categoría</div>
-              <div class="picker__value">{{ edit.categoria_nombre || 'Seleccionar' }}</div>
+              <div class="picker__value">{{ edit.categoria_nombre ||
+                'Seleccionar' }}</div>
             </div>
             <ion-icon name="chevron-forward-outline"></ion-icon>
           </button>
@@ -231,13 +257,15 @@
           <button type="button" class="picker" (click)="chooseProvider()">
             <div class="picker__text">
               <div class="picker__label">Proveedor</div>
-              <div class="picker__value">{{ edit.proveedor_nombre || 'Seleccionar' }}</div>
+              <div class="picker__value">{{ edit.proveedor_nombre ||
+                'Seleccionar' }}</div>
             </div>
             <ion-icon name="chevron-forward-outline"></ion-icon>
           </button>
 
           <div style="height:12px"></div>
-          <ion-button expand="block" type="submit" class="btn-save">Guardar</ion-button>
+          <ion-button expand="block" type="submit"
+            class="btn-save">Guardar</ion-button>
         </form>
       </ion-content>
     </ng-template>

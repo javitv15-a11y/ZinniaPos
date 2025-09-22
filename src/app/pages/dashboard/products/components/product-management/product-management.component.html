@@ -9,14 +9,12 @@
   </ion-toolbar>
 </ion-header>
 
-<!-- contentId para enganchar el menú de filtros -->
+
 <ion-content id="main-content" fullscreen="true">
-  <!-- refresco -->
   <ion-refresher slot="fixed" (ionRefresh)="reload($event)">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <!-- buscador + botón filtro -->
   <div class="search-wrap">
     <ion-searchbar
       class="search"
@@ -36,7 +34,7 @@
     </ion-menu-toggle>
   </div>
 
-  <!-- Chips con texto de filtros activos -->
+
   <div class="chips" *ngIf="activeFilter">
     <ion-chip (click)="clearFilter()">
       <ion-label>{{ activeFilter }}</ion-label>
@@ -44,7 +42,6 @@
     </ion-chip>
   </div>
 
-  <!-- skeletons -->
   <ng-container *ngIf="loading; else loaded">
     <ion-list>
       <ion-item *ngFor="let i of skeletons">
@@ -64,11 +61,10 @@
     </ion-list>
   </ng-container>
 
-  <!-- contenido -->
+
   <ng-template #loaded>
     <ng-container *ngIf="filtered.length; else emptyOrSearchEmpty">
       <ion-list>
-        <!-- 👉 navega directo al detail -->
         <ion-item
           *ngFor="let p of filtered; trackBy: trackById"
           button
@@ -96,14 +92,12 @@
     </ng-container>
 
     <ng-template #emptyOrSearchEmpty>
-      <!-- si hay búsqueda pero no resultados -->
       <div class="no-results" *ngIf="query?.trim(); else emptyState">
         <p>No encontramos resultados para “{{ query }}”.</p>
         <ion-button expand="block" fill="outline"
           (click)="clearSearch()">Limpiar búsqueda</ion-button>
       </div>
 
-      <!-- estado vacío -->
       <ng-template #emptyState>
         <div class="hero">
           <img class="hero-img" src="assets/images/products.png"
@@ -125,7 +119,7 @@
   </ng-template>
 </ion-content>
 
-<!-- ======= Menú lateral de filtros ======= -->
+
 <ion-menu menuId="filters" contentId="main-content" side="end"
   class="filters-menu">
   <ion-header>

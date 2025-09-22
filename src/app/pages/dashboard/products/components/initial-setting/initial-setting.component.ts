@@ -8,7 +8,7 @@ import { ProgressListComponent } from 'src/app/shared/components/progress-list/p
 
 import { InitialBusinessSettingService } from 'src/app/core/services/utils/initial-setting.service';
 import { IListTask } from 'src/app/core/consts/types/progress-list.type';
-import { settingHeader } from '././initial-setting.consts'; // ajusta la ruta si tu const está en otro lugar
+import { settingHeader } from '././initial-setting.consts'; 
 
 @Component({
   selector: 'app-products-initial-setting',
@@ -36,7 +36,7 @@ export class InitialSettingComponent implements OnInit {
     this.initialTask = this._initialSettingSrv.getInitialUserTask();
   }
 
-  // si tu Header dispara una acción modal, lo dejamos por compatibilidad
+  
   public actionCompleted(): void {
     this._modalCtrl.dismiss({ completed: true });
   }

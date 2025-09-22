@@ -49,7 +49,6 @@ export class CustomerDetailComponent implements OnInit {
 
   private id = "";
 
-  /** Guarda el pedido crudo por id para poder armar el pref al abrir detalle */
   private originalById = new Map<string, any>();
 
   constructor(
@@ -69,10 +68,7 @@ export class CustomerDetailComponent implements OnInit {
     this.error = undefined;
     try {
       await this.loadCustomer();
-      await this.loadOrdersWithFallback(); // trae pedidos con fallback
-
-      // 👇 Hidratamos el conteo desde el detalle si en la lista venía 0
-      //    (se va actualizando progresivamente en pantalla)
+      await this.loadOrdersWithFallback();
       this.hydrateCountsFromDetail();
     } catch (e: any) {
       this.error = e?.message || "No se pudo cargar el cliente";
@@ -82,17 +78,15 @@ export class CustomerDetailComponent implements OnInit {
     }
   }
 
-  // ===== Navegación atrás con fallback =====
+  
   goBack() {
     if (history.length > 1) this.nav.back();
     else this.nav.navigateBack(["/customers"]);
   }
 
-  // ====== Data ======
+
   private async loadCustomer() {
     let raw: any = null;
-
-    // si tienes getClienteById úsalo; si no, busca en la lista
     const anySrv: any = this.clientesSrv as any;
     if (typeof anySrv.getClienteById === "function") {
       raw = await anySrv.getClienteById(this.id);
@@ -112,18 +106,17 @@ export class CustomerDetailComponent implements OnInit {
     this.customer = this.toUICustomer(raw);
   }
 
-  /** Intenta primero por cliente_id; si viene vacío y hay teléfono, intenta por teléfono */
+ 
   private async loadOrdersWithFallback() {
     let arr: PedidoApi[] = [];
 
-    // 1) por cliente_id
+    
     try {
       arr = await this.orderSrv.getByCliente(this.id);
     } catch {
-      // ignora; probamos fallback
     }
 
-    // 2) fallback por teléfono si no hay pedidos y tenemos teléfono
+   
     const phone = (this.customer?.telefono || "").toString().replace(/\D/g, "");
     if ((!arr || arr.length === 0) && phone) {
       const srv: any = this.orderSrv as any;
@@ -139,11 +132,11 @@ export class CustomerDetailComponent implements OnInit {
           ];
         }
       } catch {
-        // no tirar la pantalla, seguimos con vacío
+        
       }
     }
 
-    // mapear a UI y ordenar por fecha desc
+    
     this.orders = (arr ?? []).map(this.toUIOrder).sort((a, b) => {
       const ta = a.date ? a.date.getTime() : 0;
       const tb = b.date ? b.date.getTime() : 0;
@@ -151,7 +144,6 @@ export class CustomerDetailComponent implements OnInit {
     });
   }
 
-  // ====== Mappers ======
   private toUICustomer = (c: any): UICustomer => ({
     id: String(c?.id ?? c?._id ?? c?.cliente_id ?? ""),
     nombre: String(c?.nombre ?? c?.name ?? "").trim(),
@@ -161,13 +153,12 @@ export class CustomerDetailComponent implements OnInit {
   });
 
   private toUIOrder = (o: PedidoApi): UIOrder => {
-    // guarda original para abrir detalle luego
     this.originalById.set(String(o.id), o);
 
     const dateStr = String(o.fecha ?? o.created_at ?? "").replace(" ", "T");
     const d = dateStr ? new Date(dateStr) : null;
 
-    // Conteo robusto de artículos (si la lista trae arrays o totales)
+    
     const itemsCount = this.unitsFromAny(o);
 
     const s = String(o.estado ?? "").toLowerCase();
@@ -191,7 +182,6 @@ export class CustomerDetailComponent implements OnInit {
     };
   };
 
-  // ====== Conteo robusto de unidades ======
   private unitsFromAny(o: any): number {
     const arr =
       (Array.isArray(o?.items) && o.items) ||
@@ -199,7 +189,6 @@ export class CustomerDetailComponent implements OnInit {
       (Array.isArray(o?.detalles) && o.detalles) ||
       (Array.isArray(o?.detalle_pedido) && o.detalle_pedido) ||
       (Array.isArray(o?.detalles_pedido) && o.detalles_pedido) ||
-      // 👇 alias camelCase adicionales
       (Array.isArray(o?.detallePedido) && o.detallePedido) ||
       (Array.isArray(o?.detallesPedido) && o.detallesPedido) ||
       (Array.isArray(o?.productos) && o.productos) ||
@@ -350,7 +339,6 @@ export class CustomerDetailComponent implements OnInit {
         o?.cliente?.nombre ||
         o?.cliente?.name ||
         "",
-      // opcionales, por si vienen embebidos
       cliente_correo: o?.cliente?.correo ?? o?.cliente?.email ?? undefined,
       cliente_direccion:
         o?.cliente?.direccion ?? o?.cliente?.address ?? undefined,
@@ -376,7 +364,6 @@ export class CustomerDetailComponent implements OnInit {
         const res = await (this.orderSrv as any).getById(String(id));
         raw = (res && (res.data || res.pedido)) || res || null;
       } catch {
-        /* ignorar */
       }
     }
 
@@ -384,24 +371,20 @@ export class CustomerDetailComponent implements OnInit {
       ? this.toPref(raw)
       : { id: String(id), items: [], itemsCount: 0 };
 
-    // 👇 añadimos bandera fromCustomer
     this.nav.navigateForward(["/dashboard", "orders", "order", id], {
       state: { pref, fromCustomer: true },
     });
   }
 
-  // ====== Hidratación del conteo desde el detalle ======
   private async hydrateCountsFromDetail() {
     const srv: any = this.orderSrv as any;
     if (typeof srv.getById !== "function") return;
 
-    // solo los que están en 0 (o sin arreglo en lista)
     const targets = this.orders.filter(
       (o) => !o.itemsCount || o.itemsCount === 0
     );
     if (!targets.length) return;
 
-    // pequeña concurrencia para no saturar
     const concurrency = 5;
     let i = 0;
     const run = async () => {
@@ -418,15 +401,13 @@ export class CustomerDetailComponent implements OnInit {
               units >= 0 &&
               units !== ui.itemsCount
             ) {
-              // mutamos el objeto para que change detection lo pinte
               ui.itemsCount = units;
 
-              // guardamos el original para openOrder()
               this.originalById.set(String(ui.id), det);
             }
           }
         } catch {
-          /* ignorar para seguir con los demás */
+          
         }
       }
     };
@@ -436,7 +417,7 @@ export class CustomerDetailComponent implements OnInit {
     );
   }
 
-  // ====== UI helpers ======
+ 
   pillClass(o: UIOrder) {
     const s = (o.status || "").toLowerCase();
     if (s.includes("pend")) return "pill pill--pendiente";

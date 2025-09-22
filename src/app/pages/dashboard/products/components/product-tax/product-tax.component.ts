@@ -3,11 +3,8 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { IonicModule, ModalController } from '@ionic/angular';
 import { RouterModule } from '@angular/router';
-
 import { HeaderComponent } from 'src/app/shared/components/header/header.component';
 import { settingHeader } from './product-tax.const';
-
-// Servicio sugerido (ajusta ruta/nombre a tu proyecto)
 import { TaxService } from 'src/app/core/services/bussiness/tax.service';
 
 type TaxType = 'included' | 'added';
@@ -32,7 +29,6 @@ export class ProductTaxComponent {
   public taxForm!: FormGroup;
   public saving = false;
 
-  // bottom sheet state
   isTypeSheetOpen = false;
   tempType: TaxType = 'included';
 
@@ -54,13 +50,13 @@ export class ProductTaxComponent {
     });
   }
 
-  // label mostrado en el item
+
   get typeLabel(): string {
     const v = this.taxForm?.get('type')?.value as TaxType;
     return v === 'included' ? 'Impuesto incluido en el precio' : 'Impuesto agregado al precio';
     }
 
-  // sheet helpers
+
   openTypeSheet() {
     this.tempType = this.taxForm.get('type')!.value as TaxType;
     this.isTypeSheetOpen = true;
@@ -71,12 +67,11 @@ export class ProductTaxComponent {
     this.closeTypeSheet();
   }
 
-  // submit (botón y check del header)
   onSubmit() {
     if (!this.taxForm || this.taxForm.invalid || this.saving) return;
 
     this.saving = true;
-    const payload = this.taxForm.value; // { name, rate, type }
+    const payload = this.taxForm.value; 
 
     this.taxService.saveTax(payload).subscribe({
       next: (ok: boolean) => {

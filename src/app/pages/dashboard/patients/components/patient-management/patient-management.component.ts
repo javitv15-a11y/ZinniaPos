@@ -5,9 +5,7 @@ import { IonicModule, ModalController } from '@ionic/angular';
 import { HttpClientModule } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-
 import { ClientesService, ClienteApi } from 'src/app/core/services/bussiness/clientes.service';
-// IMPORTA EL SERVICIO *PLURAL*:
 import { AppointmentsService, AppointmentApi } from 'src/app/core/services/bussiness/appointment.service';
 import { ProductCustomerComponent } from 'src/app/pages/dashboard/products/components/product-customer/product-customer.component';
 
@@ -48,17 +46,14 @@ export class PatientManagementComponent implements OnInit {
     this.loading = true;
     this.error = undefined;
     try {
-      // 1) Trae pacientes y píntalos rápido
       const raw = await this.clientesSrv.getClientes();
       this.pacientes = (raw ?? []).map(this.mapPacienteBase);
       this.applyFilter();
 
-      // 2) Trae TODAS las citas una sola vez y arma el resumen por cliente
-      //    Si falla, no rompe UI ni dispara popups repetidos
       const citas = await this.apptSrv.getAllSafe();
       const resume = this.buildResumeFromAppointments(citas);
 
-      // 3) Inyecta los datos en las filas y refresca filtro
+      
       this.pacientes = this.pacientes.map(p => {
         const r = resume[this.getId(p)] ?? { count: 0, last: null };
         return { ...p, citasCount: r.count, ultimaCitaDate: r.last };
@@ -74,7 +69,7 @@ export class PatientManagementComponent implements OnInit {
     }
   }
 
-  // ----- Mappers / helpers -----
+  
   private mapPacienteBase = (c: ClienteApi): PacienteUI => {
     const correo = String((c as any).correo ?? (c as any).email ?? '').trim();
     const telefono = String((c as any).telefono ?? (c as any).phone ?? (c as any).celular ?? '').trim();
@@ -91,7 +86,7 @@ export class PatientManagementComponent implements OnInit {
     };
   };
 
-  /** Construye { clienteId: {count, last} } a partir de la lista completa de citas */
+ 
   private buildResumeFromAppointments(appts: AppointmentApi[]) {
     const out: Record<string, { count: number; last: Date | null }> = {};
     for (const a of appts || []) {
@@ -113,7 +108,7 @@ export class PatientManagementComponent implements OnInit {
     return Number.isNaN(d.getTime()) ? null : d;
   }
 
-  // ----- Filtro / búsqueda -----
+
   applyFilter() {
     const q = this.query.trim().toLowerCase();
     if (!q) {
@@ -135,7 +130,7 @@ export class PatientManagementComponent implements OnInit {
     this.applyFilter();
   }
 
-  // ----- UI helpers -----
+
   getId(c: any) {
     return String(c?.id ?? c?.cliente_id ?? c?._id ?? '').trim();
   }
@@ -148,7 +143,7 @@ export class PatientManagementComponent implements OnInit {
   }
   trackById = (_: number, p: PacienteUI) => this.getId(p) || _;
 
-  // Botón “+” (igual que clientes)
+
   async onAdd() {
     const modal = await this.modalCtrl.create({
       component: ProductCustomerComponent,

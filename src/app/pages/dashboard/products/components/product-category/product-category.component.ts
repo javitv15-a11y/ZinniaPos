@@ -50,7 +50,7 @@ export class ProductCategoryComponent implements OnDestroy {
     this.categoryForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
       description: [''],
-      // Impuesto (%) 0–100 con hasta 2 decimales (coma o punto)
+      
       tax: [
         '',
         [
@@ -62,7 +62,7 @@ export class ProductCategoryComponent implements OnDestroy {
       ],
     });
 
-    // Habilita/deshabilita el ✓ del header
+    
     this.sub = this.categoryForm.statusChanges.subscribe(() => {
       this.settingHeader = {
         ...this.settingHeader,
@@ -78,7 +78,6 @@ export class ProductCategoryComponent implements OnDestroy {
   private parseTax(value: unknown): number {
     const n = Number(String(value ?? '').replace(',', '.'));
     if (Number.isNaN(n)) return 0;
-    // Clamp 0..100 y redondea a 2 decimales
     return Math.min(100, Math.max(0, Math.round(n * 100) / 100));
   }
 
@@ -101,9 +100,6 @@ export class ProductCategoryComponent implements OnDestroy {
       const dto: CreateCategoriaDto = {
         nombre: String(f.name).trim(),
         impuesto: this.parseTax(f.tax),
-        // (description queda solo para UI; el endpoint no la requiere)
-        // fecha_registro opcional:
-        // fecha_registro: new Date().toISOString().slice(0,19).replace('T',' '),
       };
 
       const { ok } = await this.categoryService.createCategoria(dto);
