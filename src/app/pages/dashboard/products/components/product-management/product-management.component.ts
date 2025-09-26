@@ -1,20 +1,29 @@
+// ===============================================
 // src/app/pages/dashboard/products/components/product-management/product-management.component.ts
+// ===============================================
 import { CommonModule } from "@angular/common";
 import { Component, OnDestroy, OnInit } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { IonicModule, MenuController, ModalController } from "@ionic/angular";
-import { RouterModule } from "@angular/router";
+import { IonicModule, ModalController } from "@ionic/angular";
+import { RouterModule, Router, NavigationEnd } from "@angular/router";
+import { Subscription, filter } from "rxjs";
+
 import {
   ProductService,
   ProductApi,
 } from "src/app/core/services/bussiness/product.service";
 import { ProductAddComponent } from "../product-add/product-add.component";
 
-
-import { Router, NavigationEnd } from "@angular/router";
-import { Subscription, filter } from "rxjs";
-
 type Status = "Activo" | "Inactivo";
+type StatusKey = "activo" | "inactivo";
+
+type CategoriaId = string;
+type CategoriaNombre = string;
+
+type FiltersPage = "root" | "estado" | "categoria";
+
+type JSSet<T> = globalThis.Set<T>;
+const JSSet = globalThis.Set;
 
 interface UIProduct {
   id: string;
@@ -22,8 +31,8 @@ interface UIProduct {
   stock: number;
   status: Status;
   image?: string | null;
-  categoryId?: string;
-  providerId?: string;
+  categoryId?: CategoriaId;
+  categoryName?: CategoriaNombre;
 }
 
 @Component({
@@ -35,70 +44,66 @@ interface UIProduct {
 })
 export class ProductManagementComponent implements OnInit, OnDestroy {
   constructor(
-    private menuCtrl: MenuController,
     private productsSrv: ProductService,
     private modalCtrl: ModalController,
-    private router: Router 
+    private router: Router
   ) {}
 
+  // Estado UI
   loading = false;
   error?: string;
 
-
+  // Búsqueda
   query = "";
-  activeFilter: string | null = null;
 
-  
+  // Datos
   products: UIProduct[] = [];
   filtered: UIProduct[] = [];
 
-  
-  private coverCache = new Map<string, string | null>();
+  // Catálogo de categorías (si viene sin nombre, intento inferirlo)
+  categoryOptions: { id: CategoriaId; name: CategoriaNombre }[] = [];
 
-  
-  statusOptions: Status[] = ["Activo", "Inactivo"];
-  categoryOptions: { id: string; name: string }[] = [];
-  providerOptions: { id: string; name: string }[] = [];
+  // Filtro (igual a Pedidos: pill + chips + modal por páginas)
+  filters = {
+    estados: new JSSet<StatusKey>(),   // múltiple
+    categoria: "todas" as "todas" | CategoriaId, // única
+  };
 
+  // Modal de filtros
+  isFiltersModalOpen = false;
+  filtersPage: FiltersPage = "root";
 
-  selectedStatuses = new Set<Status>();
-  selectedCategories = new Set<string>();
-  selectedProviders = new Set<string>();
-
-  skeletons = Array.from({ length: 6 });
-
-
-  private subs = new Subscription();
-
- 
-  private readonly LIST_URL_FRAGMENT = "/product-management";
-
-  get activeFilterCount(): number {
+  // Otros
+  get activeFiltersCount(): number {
     let n = 0;
-    if (this.selectedStatuses.size) n++;
-    if (this.selectedCategories.size) n++;
-    if (this.selectedProviders.size) n++;
+    if (this.filters.estados.size) n++;
+    if (this.filters.categoria !== "todas") n++;
     return n;
   }
+  get estadosArray(): StatusKey[] {
+    return Array.from(this.filters.estados);
+  }
+
+  skeletons = Array.from({ length: 6 });
+  private coverCache = new Map<string, string | null>();
+  private subs = new Subscription();
+  private readonly LIST_URL_FRAGMENT = "/product-management";
 
   ngOnInit(): void {
-
     this.loadProducts();
 
-   
+    // Si alguien creó/editó un producto desde otro lado
     this.subs.add(
       this.productsSrv.productChanged$.subscribe(() => this.loadProducts())
     );
 
-   
+    // Recargar al volver al listado
     this.subs.add(
       this.router.events
         .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
         .subscribe((e) => {
           const url = e.urlAfterRedirects || e.url || "";
-          if (this.isListUrl(url)) {
-            this.loadProducts();
-          }
+          if (this.isListUrl(url)) this.loadProducts();
         })
     );
   }
@@ -107,68 +112,105 @@ export class ProductManagementComponent implements OnInit, OnDestroy {
     this.subs.unsubscribe();
   }
 
-
   ionViewWillEnter() {
     this.loadProducts();
   }
 
-
-  openFilters() { this.menuCtrl.open("filters"); }
-  closeFilters() { this.menuCtrl.close("filters"); }
-
-  resetFilters() {
-    this.selectedStatuses.clear();
-    this.selectedCategories.clear();
-    this.selectedProviders.clear();
-    this.applyFilter();
-  }
-  applyAndClose() {
-    this.applyFilter();
-    this.closeFilters();
-  }
-
- 
+  // ===================== Data =====================
   async loadProducts() {
     this.loading = true;
     this.error = undefined;
     try {
-      const apiList = await this.productsSrv.getAll(); 
+      const apiList = await this.productsSrv.getAll();
       this.products = apiList.map(this.toUI);
 
-      
+      await this.hydrateCategoryOptions(apiList);
       await this.hydrateCovers(this.products, apiList);
 
-      this.applyFilter();
+      this.runFilters();
     } catch (e: any) {
       this.error = e?.message || "No se pudo cargar productos";
+      this.products = [];
+      this.filtered = [];
     } finally {
       this.loading = false;
     }
   }
 
-  private toUI = (p: ProductApi): UIProduct => ({
-    id: p.id,
-    name: p.nombre,
-    stock: Number(p.stock_actual ?? 0),
-    status: (p.estado as Status) || "Activo",
-    image: null,
-    categoryId: p.categoria_id,
-    providerId: p.proveedor_id,
-  });
+  private toUI = (p: ProductApi): UIProduct => {
+    const stockNum = Number(p.stock_actual ?? 0);
+    const baseStatus: Status = (p.estado as Status) || "Activo";
+    // Regla: stock 0 → Inactivo
+    const finalStatus: Status = stockNum > 0 ? baseStatus : "Inactivo";
 
-  
+    return {
+      id: p.id,
+      name: p.nombre,
+      stock: stockNum,
+      status: finalStatus,
+      image: null,
+      categoryId: p.categoria_id,
+      categoryName:
+        (p as any).categoria_nombre ??
+        (p as any).categoria?.nombre ??
+        undefined,
+    };
+  };
+
+  /** Construye catálogo de categorías con NOMBRE siempre que sea posible */
+  private async hydrateCategoryOptions(apiList: ProductApi[]) {
+    // 1) Desde el listado si vienen nombres
+    const seen: Record<string, string> = {};
+    for (const p of apiList as any[]) {
+      const id = p?.categoria_id as string | undefined;
+      const name = (p?.categoria_nombre ?? p?.categoria?.nombre) as string | undefined;
+      if (id && name && !seen[id]) seen[id] = String(name);
+    }
+    const fromList = Object.entries(seen).map(([id, name]) => ({ id, name }));
+    if (fromList.length) {
+      this.categoryOptions = fromList;
+      return;
+    }
+
+    // 2) Intentar servicio getCategories(), si existe
+    const anySrv: any = this.productsSrv as any;
+    if (typeof anySrv.getCategories === "function") {
+      try {
+        const cats = await anySrv.getCategories();
+        this.categoryOptions = (cats || []).map((c: any) => ({
+          id: String(c.id ?? c._id ?? c.uuid),
+          name: String(c.nombre ?? c.name ?? c.title ?? c.label ?? c.id),
+        }));
+        return;
+      } catch { /* ignore */ }
+    }
+
+    // 3) Último recurso: IDs deduplicadas (sin Set, para evitar problemas)
+    const ids: string[] = [];
+    for (const p of apiList as any[]) {
+      const id = p?.categoria_id as string | undefined;
+      if (id && !ids.includes(id)) ids.push(id);
+    }
+    this.categoryOptions = ids.map((id) => ({ id, name: String(id) }));
+  }
+
   private async hydrateCovers(uiList: UIProduct[], apiList: ProductApi[]) {
-    const byId = new Map(apiList.map(a => [a.id, a]));
+    const byId: Record<string, ProductApi> = {};
+    for (const a of apiList) byId[a.id] = a;
+
     const tasks = uiList.map(async (row) => {
       if (this.coverCache.has(row.id)) {
         row.image = this.coverCache.get(row.id)!;
         return;
       }
-      const api = byId.get(row.id);
+      const api = byId[row.id];
       let url: string | null = null;
       try {
-        if (api?.idunico) {
-          url = await this.productsSrv.getCoverUrl({ id: row.id, idunico: api.idunico });
+        if ((api as any)?.idunico) {
+          url = await this.productsSrv.getCoverUrl({
+            id: row.id,
+            idunico: (api as any).idunico,
+          });
         } else {
           url = await this.productsSrv.getCoverUrl(row.id);
         }
@@ -180,85 +222,93 @@ export class ProductManagementComponent implements OnInit, OnDestroy {
     await Promise.allSettled(tasks);
   }
 
-  async reload(ev?: CustomEvent) {
-    await this.loadProducts(); 
-    (ev?.target as HTMLIonRefresherElement)?.complete?.();
+  // ===================== Filtros & Búsqueda =====================
+  applyQueryFilter() { this.runFilters(); }
+
+  private normalize(t: string | undefined | null): string {
+    return (t || "")
+      .toString()
+      .normalize("NFD")
+      .replace(/\p{Diacritic}/gu, "")
+      .toLowerCase()
+      .trim();
   }
 
-  
-  applyFilter() {
-    const q = this.query.trim().toLowerCase();
-    let out = [...this.products];
+  private statusKeyOf(p: UIProduct): StatusKey {
+    return (p.status || "Inactivo").toLowerCase() as StatusKey;
+  }
 
+  private runFilters() {
+    let arr = [...this.products];
+
+    // Búsqueda
+    const q = this.normalize(this.query);
     if (q) {
-      out = out.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          (p.categoryId || "").toLowerCase().includes(q) ||
-          (p.providerId || "").toLowerCase().includes(q)
-      );
+      arr = arr.filter((p) => {
+        const name = this.normalize(p.name);
+        const cat = this.normalize(p.categoryName ?? p.categoryId);
+        return name.includes(q) || cat.includes(q);
+      });
     }
 
-    if (this.selectedStatuses.size) {
-      out = out.filter((p) => this.selectedStatuses.has(p.status));
-    }
-    if (this.selectedCategories.size) {
-      out = out.filter(
-        (p) => p.categoryId && this.selectedCategories.has(p.categoryId)
-      );
-    }
-    if (this.selectedProviders.size) {
-      out = out.filter(
-        (p) => p.providerId && this.selectedProviders.has(p.providerId)
-      );
+    // Estado (múltiple)
+    if (this.filters.estados.size) {
+      arr = arr.filter((p) => this.filters.estados.has(this.statusKeyOf(p)));
     }
 
-    this.filtered = out;
-    this.activeFilter = this.buildActiveFilterLabel();
-  }
-
-  private buildActiveFilterLabel(): string | null {
-    const parts: string[] = [];
-    if (this.selectedStatuses.size)
-      parts.push(Array.from(this.selectedStatuses).join(", "));
-    if (this.selectedCategories.size) {
-      const names = this.categoryOptions
-        .filter((c) => this.selectedCategories.has(c.id))
-        .map((c) => c.name);
-      if (names.length) parts.push(names.join(", "));
+    // Categoría (única)
+    if (this.filters.categoria !== "todas") {
+      arr = arr.filter((p) => p.categoryId === this.filters.categoria);
     }
-    if (this.selectedProviders.size) {
-      const names = this.providerOptions
-        .filter((p) => this.selectedProviders.has(p.id))
-        .map((p) => p.name);
-      if (names.length) parts.push(names.join(", "));
+
+    this.filtered = arr;
+  }
+
+  // ===================== Chips y modal (igual que Pedidos) =====================
+  get categoriaSummary(): string {
+    if (this.filters.categoria === "todas") return "";
+    const hit = this.categoryOptions.find((c) => c.id === this.filters.categoria);
+    return hit?.name || "";
+  }
+  get estadoSummary(): string {
+    const arr = Array.from(this.filters.estados);
+    if (!arr.length) return "";
+    const title = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+    return arr.map(title).join(", ");
+  }
+
+  removeFilterChip(kind: "estado" | "categoria", value?: StatusKey) {
+    if (kind === "estado" && value) {
+      this.filters.estados.delete(value);
+    } else if (kind === "categoria") {
+      this.filters.categoria = "todas";
     }
-    return parts.length ? parts.join(" • ") : null;
+    this.runFilters();
   }
 
-  toggleStatus(s: Status, checked: boolean) {
-    checked ? this.selectedStatuses.add(s) : this.selectedStatuses.delete(s);
+  openFilters() { this.filtersPage = "root"; this.isFiltersModalOpen = true; }
+  closeFilters() { this.isFiltersModalOpen = false; }
+  openFiltersPage(p: FiltersPage) { this.filtersPage = p; }
+
+  onEstadoChange(est: StatusKey, checked: boolean) {
+    if (checked) this.filters.estados.add(est);
+    else this.filters.estados.delete(est);
+    this.runFilters();
   }
-  toggleCategory(id: string, checked: boolean) {
-    checked
-      ? this.selectedCategories.add(id)
-      : this.selectedCategories.delete(id);
-  }
-  toggleProvider(id: string, checked: boolean) {
-    checked
-      ? this.selectedProviders.add(id)
-      : this.selectedProviders.delete(id);
+  onCategoriaChange(v: "todas" | string) {
+    this.filters.categoria = v;
+    this.runFilters();
   }
 
-  clearSearch() {
-    this.query = "";
-    this.applyFilter();
-  }
-  clearFilter() {
-    this.resetFilters();
+  applyFilters() { this.closeFilters(); this.runFilters(); }
+  clearAllFilters() {
+    this.filters = { estados: new JSSet<StatusKey>(), categoria: "todas" };
+    this.runFilters();
   }
 
+  clearSearch() { this.query = ""; this.applyQueryFilter(); }
 
+  // ===================== Otros =====================
   trackById(_: number, p: UIProduct) { return p.id; }
 
   async onAdd() {
@@ -269,14 +319,12 @@ export class ProductManagementComponent implements OnInit, OnDestroy {
       initialBreakpoint: 1,
     });
     await modal.present();
-
     const { data } = await modal.onDidDismiss();
     if (data?.completed) {
       this.coverCache.clear();
       await this.loadProducts();
     }
   }
-
 
   private isListUrl(url: string): boolean {
     return url.includes(this.LIST_URL_FRAGMENT);

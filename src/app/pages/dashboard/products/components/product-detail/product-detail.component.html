@@ -15,7 +15,8 @@
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <ng-container *ngIf="loading; else loaded">
+  <!-- Estado cargando -->
+  <ng-container *ngIf="loading; else loadedTpl">
     <div class="gallery">
       <ion-skeleton-text animated
         style="width: 100%; height: 220px; border-radius: 14px;"></ion-skeleton-text>
@@ -38,11 +39,13 @@
             <ion-skeleton-text animated style="width: 60%"></ion-skeleton-text>
           </h1>
           <ion-chip class="chip">
-            <ion-label><ion-skeleton-text animated
-                style="width: 80px"></ion-skeleton-text></ion-label>
+            <ion-label>
+              <ion-skeleton-text animated
+                style="width: 80px"></ion-skeleton-text>
+            </ion-label>
           </ion-chip>
         </div>
-        <span class="status-pill">
+        <span class="status">
           <ion-skeleton-text animated style="width: 56px"></ion-skeleton-text>
         </span>
       </div>
@@ -70,8 +73,10 @@
     </div>
   </ng-container>
 
-  <ng-template #loaded>
-    <ng-container *ngIf="product; else errorTpl">
+  <!-- Estado cargado -->
+  <ng-template #loadedTpl>
+    <ng-container *ngIf="product as p; else errorTpl">
+      <!-- Galería -->
       <div class="gallery">
         <div class="hero-img">
           <img *ngIf="heroImage; else noImage" [src]="heroImage"
@@ -80,10 +85,10 @@
         </div>
 
         <div class="thumbs">
-          <div class="thumb-wrap"
-            *ngFor="let img of product.images; index as i">
+          <div class="thumb-wrap" *ngFor="let img of p.images; index as i">
             <button class="thumb" (click)="selectImage(i)"
-              [class.thumb--active]="i === selectedIndex">
+              [class.thumb--active]="i === selectedIndex"
+              aria-label="Seleccionar miniatura">
               <img [src]="img" alt="Miniatura" />
             </button>
             <button class="thumb-delete"
@@ -102,42 +107,46 @@
         </div>
       </div>
 
+      <!-- Datos -->
       <div class="section">
         <div class="title-row">
           <div class="title-col">
-            <h1 class="name">{{ product.name }}</h1>
-            <ion-chip class="chip" *ngIf="product.categoryName">
-              <ion-label>{{ product.categoryName }}</ion-label>
+            <h1 class="name">{{ p.name }}</h1>
+
+            <ion-chip class="chip" *ngIf="p.categoryName">
+              <ion-label>{{ p.categoryName }}</ion-label>
             </ion-chip>
           </div>
 
           <span class="status"
-            [ngClass]="product.status === 'Activo' ? 'status--activo' : 'status--inactivo'">
-            {{ product.status }}
+            [ngClass]="p.status === 'Activo' ? 'status--activo' : 'status--inactivo'">
+            {{ p.status }}
           </span>
         </div>
 
-        <div class="block" *ngIf="product.description">
+        <div class="block" *ngIf="p.description">
           <h3 class="label">Descripción</h3>
-          <p class="value">{{ product.description }}</p>
+          <p class="value">{{ p.description }}</p>
         </div>
 
         <div class="block">
           <h3 class="label">Precio de venta ($)</h3>
-          <p class="value">{{ product.salePrice | number:'1.2-2' }}</p>
+          <p class="value">{{ p.salePrice | number:'1.2-2' }}</p>
         </div>
 
         <div class="block">
           <h3 class="label">Precio de costo ($)</h3>
-          <p class="value">{{ product.costPrice | number:'1.2-2' }}</p>
+          <p class="value">{{ p.costPrice | number:'1.2-2' }}</p>
         </div>
 
+        <!-- PROVEEDOR (visible) -->
         <div class="block">
           <h3 class="label">Proveedor</h3>
-          <p class="value">{{ product.providerName || 'Sin proveedor' }}</p>
+          <p class="value">{{ p.providerName || '—' }}</p>
         </div>
       </div>
 
+      <!-- Inventario -->
       <div class="inventory">
         <div class="inventory__head">
           <h3>Inventario</h3>
@@ -148,16 +157,17 @@
         <div class="inventory__row">
           <div class="item">
             <div class="item__label">Stock actual</div>
-            <div class="item__value">{{ product.stockActual }}</div>
+            <div class="item__value">{{ p.stockActual }}</div>
           </div>
-          <div class="item" *ngIf="product.stockMin !== undefined">
+          <div class="item" *ngIf="p.stockMin !== undefined">
             <div class="item__label">Stock mínimo</div>
-            <div class="item__value">{{ product.stockMin }}</div>
+            <div class="item__value">{{ p.stockMin }}</div>
           </div>
         </div>
       </div>
     </ng-container>
 
+    <!-- Error -->
     <ng-template #errorTpl>
       <div class="error-state">
         <p>{{ error || 'No se pudo cargar el producto.' }}</p>
@@ -166,6 +176,7 @@
     </ng-template>
   </ng-template>
 
+  <!-- MODAL EDICIÓN -->
   <ion-modal [isOpen]="editOpen" (didDismiss)="closeEdit()" class="edit-modal">
     <ng-template>
       <ion-header class="edit-header">
@@ -187,18 +198,20 @@
       </ion-header>
 
       <ion-content class="edit-content ion-padding">
+        <!-- Galería en modal -->
         <div class="gallery">
           <div class="hero-img">
-            <img *ngIf="heroImage; else noImage" [src]="heroImage"
+            <img *ngIf="heroImage; else noImage2" [src]="heroImage"
               alt="Imagen de producto" />
-            <ng-template #noImage><div class="noimg"></div></ng-template>
+            <ng-template #noImage2><div class="noimg"></div></ng-template>
           </div>
 
           <div class="thumbs">
             <div class="thumb-wrap"
               *ngFor="let img of product?.images; index as i">
               <button class="thumb" (click)="selectImage(i)"
-                [class.thumb--active]="i === selectedIndex">
+                [class.thumb--active]="i === selectedIndex"
+                aria-label="Seleccionar miniatura">
                 <img [src]="img" alt="Miniatura" />
               </button>
               <button class="thumb-delete"
@@ -217,6 +230,7 @@
           </div>
         </div>
 
+        <!-- Formulario -->
         <form (ngSubmit)="saveEdit()" class="edit-form">
           <div class="field">
             <label class="field__label">Título del producto</label>
@@ -245,6 +259,7 @@
               placeholder="0.00"></ion-input>
           </div>
 
+          <!-- Picker de categoría -->
           <button type="button" class="picker" (click)="chooseCategory()">
             <div class="picker__text">
               <div class="picker__label">Categoría</div>
@@ -254,6 +269,7 @@
             <ion-icon name="chevron-forward-outline"></ion-icon>
           </button>
 
+          <!-- Picker de proveedor (VISIBLE y usando edit.proveedor_nombre) -->
           <button type="button" class="picker" (click)="chooseProvider()">
             <div class="picker__text">
               <div class="picker__label">Proveedor</div>
@@ -272,6 +288,7 @@
   </ion-modal>
 </ion-content>
 
+<!-- Footer -->
 <ion-footer *ngIf="product">
   <ion-toolbar class="footer">
     <ion-button expand="block" size="large" shape="round" (click)="openEdit()">

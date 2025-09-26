@@ -28,7 +28,7 @@ ion-header { --border-width: 0 0 0.5px 0; }
 .chip { --background: #f0f2f5; --color: #111; border-radius: 999px; height: 24px; margin-top: 6px; }
 .more { --color: #111; }
 
-/* ===== Botón “Ver historial” ===== */
+/* ===== Botón “Ver historial” (outline) ===== */
 .btn-outline {
   --border-radius: 12px;
   margin: 0 16px 12px;
@@ -38,8 +38,24 @@ ion-header { --border-width: 0 0 0.5px 0; }
 }
 
 /* ===== Preferencias ===== */
+.prefs { margin-top: 8px; }
 .prefs ion-item { --inner-padding-end: 10px; }
 .prefs ion-toggle { --handle-background: #fff; }
+
+/* Pastilla numérica tipo “2” */
+.pill-input {
+  width: 34px;
+  text-align: center;
+  --padding-start: 0;
+  --padding-end: 0;
+  --background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  height: 24px;
+  font-size: 13px;
+  line-height: 24px;
+  color: #111;
+}
 
 /* ===== Cantidad ===== */
 .qty ion-item-divider { font-weight: 700; }

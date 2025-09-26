@@ -1,4 +1,3 @@
-// src/app/pages/dashboard/orders/components/orders-detail/orders-detail.component.ts
 import { CommonModule } from "@angular/common";
 import { Component, OnInit, ChangeDetectorRef, OnDestroy } from "@angular/core";
 import { IonicModule, NavController } from "@ionic/angular";
@@ -63,7 +62,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   order?: UIOrderDetail | null;
 
   private id = "";
-  hideClientBlock = false; 
+  hideClientBlock = false;
 
   private prodById = new Map<string, ProductApi>();
   private prodByUnique = new Map<string, ProductApi>();
@@ -112,7 +111,8 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
 
       this.order = {
         id: String(st.id || this.id),
-        estado: (st.estado as UIEstado) || "Pendiente",
+        // Puede venir "Pendiente" u otro; el merge elegirá siempre el primer NO vacío privilegiando fresh.
+        estado: (st.estado as UIEstado) ?? (undefined as any),
         fecha: st.fecha ? new Date(String(st.fecha).replace(" ", "T")) : null,
         total: st.total != null ? Number(st.total) : null,
         items: preItems,
@@ -139,6 +139,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     try {
       const fresh = await this.fetchOrder();
       this.order = this.mergeOrders(this.order ?? null, fresh);
+
       if (this.order) {
         if (!this.order.itemsCount || this.order.itemsCount < 1) {
           this.order.itemsCount = (this.order.items || []).reduce(
@@ -167,8 +168,19 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ... el resto del código queda igual ...
+  // =================== Helpers ===================
+  // Devuelve el primer string no vacío
+  private pickNonEmpty(
+    ...vals: Array<string | null | undefined>
+  ): string | undefined {
+    for (const v of vals) {
+      const s = (v ?? "").toString().trim();
+      if (s) return s;
+    }
+    return undefined;
+  }
 
+  // =================== Data fetch & merge ===================
   private async fetchOrder(): Promise<UIOrderDetail> {
     let raw: any | null = null;
     const anySrv: any = this.ordersSrv as any;
@@ -199,19 +211,40 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     pref: UIOrderDetail | null,
     fresh: UIOrderDetail
   ): UIOrderDetail {
-    if (!pref) return fresh;
+    if (!pref) {
+      return {
+        ...fresh,
+        estado: this.pickNonEmpty(fresh.estado, "Pendiente") as UIEstado,
+      };
+    }
     return {
-      id: pref.id || fresh.id,
-      estado: pref.estado || fresh.estado,
-      fecha: pref.fecha ?? fresh.fecha,
-      total: pref.total ?? fresh.total,
+      id: this.pickNonEmpty(fresh.id, pref.id)!,
+      estado: this.pickNonEmpty(
+        fresh.estado,
+        pref.estado,
+        "Pendiente"
+      ) as UIEstado,
+      fecha: fresh.fecha ?? pref.fecha,
+      total: fresh.total ?? pref.total,
       items: fresh.items?.length ? fresh.items : pref.items,
       itemsCount: fresh.itemsCount || pref.itemsCount || 0,
-      cliente_id: pref.cliente_id || fresh.cliente_id,
-      numero_celular: pref.numero_celular || fresh.numero_celular,
-      cliente_nombre: pref.cliente_nombre || fresh.cliente_nombre,
-      cliente_correo: pref.cliente_correo || fresh.cliente_correo,
-      cliente_direccion: pref.cliente_direccion || fresh.cliente_direccion,
+      cliente_id: this.pickNonEmpty(fresh.cliente_id, pref.cliente_id),
+      numero_celular: this.pickNonEmpty(
+        fresh.numero_celular,
+        pref.numero_celular
+      ),
+      cliente_nombre: this.pickNonEmpty(
+        fresh.cliente_nombre,
+        pref.cliente_nombre
+      ),
+      cliente_correo: this.pickNonEmpty(
+        fresh.cliente_correo,
+        pref.cliente_correo
+      ),
+      cliente_direccion: this.pickNonEmpty(
+        fresh.cliente_direccion,
+        pref.cliente_direccion
+      ),
     };
   }
 
@@ -531,16 +564,24 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     ).replace(" ", "T");
     const d = dateStr ? new Date(dateStr) : null;
 
-    const s = String(o?.estado ?? o?.status ?? "").toLowerCase();
-    const estado: UIEstado = s.includes("pend")
+    const s = String(o?.estado ?? o?.status ?? "")
+      .toLowerCase()
+      .trim();
+
+    // Mapeo con sinónimos y luego fallback
+    let estadoMapped: UIEstado = s.includes("pend")
       ? "Pendiente"
       : s.includes("conf")
       ? "Confirmado"
       : s.includes("entreg")
       ? "Entregado"
-      : s.includes("cancel")
+      : s.includes("cancel") || s.includes("anul") || s.includes("rechaz")
       ? "Cancelado"
-      : o?.estado ?? o?.status ?? "";
+      : ((o?.estado ?? o?.status ?? "") as UIEstado);
+
+    if (!String(estadoMapped ?? "").trim()) {
+      estadoMapped = "Pendiente";
+    }
 
     const rawItems =
       (Array.isArray(o?.items) && o.items) ||
@@ -683,7 +724,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
 
     return {
       id: String(oid),
-      estado,
+      estado: estadoMapped,
       fecha: d && !Number.isNaN(d.getTime()) ? d : null,
       total:
         o?.total != null && Number.isFinite(Number(o?.total))
@@ -706,7 +747,8 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
       "pill--pendiente": s.includes("pend"),
       "pill--confirmado": s.includes("conf"),
       "pill--entregado": s.includes("entre") || s.includes("entreg"),
-      "pill--cancelado": s.includes("canc"),
+      "pill--cancelado":
+        s.includes("canc") || s.includes("anul") || s.includes("rechaz"),
     };
   }
 

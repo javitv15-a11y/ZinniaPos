@@ -1,0 +1,97 @@
+<ion-header translucent="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button fill="clear" (click)="dismiss()">
+        <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+
+    <ion-title class="title">Método de pago</ion-title>
+
+    <ion-buttons slot="end">
+      <ion-button fill="clear" [disabled]="!form.valid" (click)="save()">
+        <ion-icon slot="icon-only" name="checkmark-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="pm-content">
+  <form [formGroup]="form" (ngSubmit)="save()">
+    <div class="card">
+      <ion-item class="field" lines="none" detail="true">
+        <ion-label class="label">Tipo de pago</ion-label>
+        <ion-select slot="end" interface="action-sheet"
+                    formControlName="paymentType"
+                    (ionChange)="onRecalc()">
+          <ion-select-option value="contado">Pago de contado</ion-select-option>
+          <ion-select-option value="credito">Pago a crédito</ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <ion-item class="field" lines="none" [class.disabled]="isContado">
+        <ion-label class="label">Número de cuotas</ion-label>
+        <ion-input slot="end" type="number" inputmode="numeric" min="1"
+                   placeholder="1"
+                   [disabled]="isContado"
+                   formControlName="installments"
+                   (ionInput)="onRecalc()">
+        </ion-input>
+      </ion-item>
+
+      <ion-item class="field" lines="none" [class.disabled]="isContado" detail="true">
+        <ion-label class="label">Frecuencia de pago</ion-label>
+        <ion-select slot="end" interface="action-sheet"
+                    [disabled]="isContado"
+                    formControlName="frequency"
+                    (ionChange)="onRecalc()">
+          <ion-select-option value="semanal">Semanal</ion-select-option>
+          <ion-select-option value="quincenal">Quincenal</ion-select-option>
+          <ion-select-option value="mensual">Mensual</ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <ion-item class="field" lines="none" [class.disabled]="isContado" detail="true">
+        <ion-label class="label">Fecha de inicio de pago</ion-label>
+        <ion-datetime-button slot="end" datetime="startDatePicker" [disabled]="isContado"></ion-datetime-button>
+        <ion-modal [keepContentsMounted]="true">
+          <ng-template>
+            <ion-datetime id="startDatePicker"
+                          presentation="date"
+                          locale="es-ES"
+                          [preferWheel]="true"
+                          formControlName="startDate"
+                          (ionChange)="onRecalc()">
+            </ion-datetime>
+          </ng-template>
+        </ion-modal>
+      </ion-item>
+    </div>
+
+    <div class="card" *ngIf="summaryRows.length">
+      <div class="row head">
+        <div class="left">{{ form.value.installments }} cuotas</div>
+        <div class="right">{{ perInstallment | currency:currencyCode:'symbol':'1.2-2' }} c/u</div>
+      </div>
+
+      <div class="row" *ngFor="let d of summaryRows; let i = index">
+        <div class="left">Cuota {{ i + 1 }}:</div>
+        <div class="right">{{ d | date:"d 'de' MMM, y":'':'es' }}</div>
+      </div>
+
+      <div class="row total">
+        <div class="left">Total compra</div>
+        <div class="right">{{ totalAmount | currency:currencyCode:'symbol':'1.2-2' }}</div>
+      </div>
+    </div>
+
+    <div class="footer-padder"></div>
+    <ion-footer class="pm-footer">
+      <ion-toolbar>
+        <ion-button expand="block" size="large" [disabled]="!form.valid" type="submit">
+          Guardar
+        </ion-button>
+      </ion-toolbar>
+    </ion-footer>
+  </form>
+</ion-content>

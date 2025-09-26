@@ -24,6 +24,9 @@ import {
 } from "src/app/core/services/bussiness/product-category.service";
 import { ProductService } from "src/app/core/services/bussiness/product.service";
 
+import { SupplierService } from "src/app/core/services/bussiness/supplier.service";
+import { firstValueFrom } from "rxjs";
+
 type IdLabel = { id: string; label: string };
 
 @Component({
@@ -49,24 +52,13 @@ export class ProductAddComponent implements OnInit {
   imageFiles: File[] = [];
   imagePreviews: string[] = [];
 
-  isCatOpen = false;
-  isSupOpen = false;
-  isTaxOpen = false;
-
   categories: IdLabel[] = [];
-  suppliers: IdLabel[] = [
-    { id: "1", label: "Proveedor A" },
-    { id: "2", label: "Proveedor B" },
-  ];
+  suppliers: IdLabel[] = [];
   taxes: IdLabel[] = [
     { id: "0", label: "IVA 0%" },
     { id: "5", label: "IVA 5%" },
     { id: "19", label: "IVA 19%" },
   ];
-
-  tmpCategoryId?: string;
-  tmpSupplierId?: string;
-  tmpTaxId?: string;
 
   constructor(
     private fb: FormBuilder,
@@ -75,12 +67,14 @@ export class ProductAddComponent implements OnInit {
     private nav: NavController,
     private router: Router,
     private categoriesSrv: ProductCategoryService,
-    private productSrv: ProductService
+    private productSrv: ProductService,
+    private supplierSrv: SupplierService,
   ) {}
 
   ngOnInit(): void {
     this.buildForm();
     this.loadCategories();
+    this.loadSuppliers();
   }
 
   private buildForm() {
@@ -108,6 +102,26 @@ export class ProductAddComponent implements OnInit {
     }
   }
 
+  private async loadSuppliers() {
+    try {
+      const obs: any = (this.supplierSrv as any).getAllSuppliers
+        ? (this.supplierSrv as any).getAllSuppliers("")
+        : (this.supplierSrv as any).list?.();
+
+      const arr: any[] = await firstValueFrom(obs);
+      this.suppliers = (arr || [])
+        .map((s: any) => {
+          const id = String(s?.id ?? s?.proveedor_id ?? s?._id ?? "").trim();
+          const name =
+            String(s?.name ?? s?.nombre ?? "").trim() || `Proveedor ${id || ""}`;
+          return id ? { id, label: name } : null;
+        })
+        .filter(Boolean) as IdLabel[];
+    } catch (e) {
+      await this.toast("No se pudieron cargar los proveedores", "danger");
+    }
+  }
+
   pickImages() {
     this.fileInput?.nativeElement?.click();
   }
@@ -120,12 +134,9 @@ export class ProductAddComponent implements OnInit {
     for (const f of files) {
       this.imageFiles.push(f);
       const reader = new FileReader();
-      reader.onload = () => {
-        this.imagePreviews.push(String(reader.result || ""));
-      };
+      reader.onload = () => this.imagePreviews.push(String(reader.result || ""));
       reader.readAsDataURL(f);
     }
-    
     input.value = "";
   }
 
@@ -135,7 +146,6 @@ export class ProductAddComponent implements OnInit {
   }
 
   trackByIndex = (_: number, __: any) => _;
-
 
   decStock(ev?: Event) {
     ev?.stopPropagation();
@@ -148,64 +158,11 @@ export class ProductAddComponent implements OnInit {
     this.form.get("stock")!.setValue(cur + 1);
   }
 
-  get categoryLabel() {
-    const id = this.form.get("categoryId")!.value as string | null;
-    return this.categories.find((x) => x.id === id)?.label ?? "Categoría";
-  }
-  get supplierLabel() {
-    const id = this.form.get("supplierId")!.value as string | null;
-    return (
-      this.suppliers.find((x) => x.id === id)?.label ?? "Proveedor (opcional)"
-    );
-  }
-  get taxLabel() {
-    const id = this.form.get("taxId")!.value as string | null;
-    return this.taxes.find((x) => x.id === id)?.label ?? "Impuesto";
-  }
-
-
-  openCatSheet() {
-    this.tmpCategoryId = this.form.get("categoryId")!.value;
-    this.isCatOpen = true;
-  }
-  openSupSheet() {
-    this.tmpSupplierId = this.form.get("supplierId")!.value;
-    this.isSupOpen = true;
-  }
-  openTaxSheet() {
-    this.tmpTaxId = this.form.get("taxId")!.value;
-    this.isTaxOpen = true;
-  }
-  closeCat() {
-    this.isCatOpen = false;
-  }
-  closeSup() {
-    this.isSupOpen = false;
-  }
-  closeTax() {
-    this.isTaxOpen = false;
-  }
-
-  applyCat() {
-    this.form.get("categoryId")!.setValue(this.tmpCategoryId ?? null);
-    this.closeCat();
-  }
-  applySup() {
-    this.form.get("supplierId")!.setValue(this.tmpSupplierId ?? null);
-    this.closeSup();
-  }
-  applyTax() {
-    this.form.get("taxId")!.setValue(this.tmpTaxId ?? null);
-    this.closeTax();
-  }
-
-  
   async onSubmit() {
     if (!this.form || this.form.invalid || this.saving) return;
     this.saving = true;
 
     try {
-    
       const res = await this.productSrv.createProduct({
         nombre: this.form.value.title,
         descripcion: this.form.value.description || "",
@@ -220,19 +177,15 @@ export class ProductAddComponent implements OnInit {
           this.form.value.taxId != null ? Number(this.form.value.taxId) : 0,
       });
 
-      
       if (this.imageFiles.length) {
         const idunico =
-          res.idunico ||
-          res.raw?.idunico ||
-          res.raw?.data?.idunico ||
-          res.id ||
-          res.raw?.data?.id;
+          (res as any).idunico ||
+          (res as any).raw?.idunico ||
+          (res as any).raw?.data?.idunico ||
+          (res as any).id ||
+          (res as any).raw?.data?.id;
         if (!idunico) {
-          await this.toast(
-            'Producto creado, pero no se recibió "idunico" para subir imágenes.',
-            "danger"
-          );
+          await this.toast('Producto creado, pero no se recibió "idunico" para subir imágenes.', "danger");
         } else {
           await this.productSrv.uploadImages(String(idunico), this.imageFiles);
         }
@@ -240,7 +193,6 @@ export class ProductAddComponent implements OnInit {
 
       await this.toast("Producto guardado correctamente", "success");
 
-      
       const top = await this.modalCtrl.getTop();
       if (top) {
         await this.modalCtrl.dismiss({ completed: true });
@@ -249,18 +201,14 @@ export class ProductAddComponent implements OnInit {
         else this.router.navigate(["/dashboard/products"]);
       }
     } catch (e: any) {
-      const msg = e?.message || "No se pudo guardar el producto";
-      await this.toast(msg, "danger");
+      await this.toast(e?.message || "No se pudo guardar el producto", "danger");
     } finally {
       this.saving = false;
     }
   }
 
-  private async toast(
-    message: string,
-    color: "success" | "danger" | "primary" = "success"
-  ) {
-    const t = await this.toastCtrl.create({ message, duration: 2200, color });
+  private async toast(message: string, color: "success" | "danger" | "primary" = "success") {
+    const t = await this.toastCtrl.create({ message, duration: 2200, color, position: "bottom" });
     await t.present();
   }
 }

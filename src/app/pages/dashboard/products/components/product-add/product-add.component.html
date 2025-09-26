@@ -6,74 +6,173 @@
 <ion-content>
   <div class="container" [formGroup]="form" *ngIf="form">
 
-    <div class="image-box" (click)="pickImages()">
-      <ng-container *ngIf="imagePreviews.length; else emptyImage">
-        <img [src]="imagePreviews[0]" alt="Imagen del producto" />
-      </ng-container>
-      <ng-template #emptyImage>
-        <div class="image-placeholder"></div>
-      </ng-template>
-    </div>
+    <!-- Galería / portada -->
+    <div class="card card--gallery">
+      <div class="image-box" (click)="pickImages()">
+        <ng-container *ngIf="imagePreviews.length; else emptyImage">
+          <img [src]="imagePreviews[0]" alt="Imagen del producto" />
+          <div class="image-overlay">
+            <ion-icon name="camera-outline"></ion-icon>
+            Cambiar imagen
+          </div>
+        </ng-container>
+        <ng-template #emptyImage>
+          <div class="image-placeholder">
+            <ion-icon name="image-outline"></ion-icon>
+            <span>Agregar portada</span>
+          </div>
+        </ng-template>
+      </div>
 
-    <div class="add-image">
-      <ion-button fill="solid" shape="round" class="add-btn"
-        (click)="pickImages()">
-        <ion-icon name="add-outline"></ion-icon>
-        &nbsp;Añadir imágenes
-      </ion-button>
+      <div class="thumbs" *ngIf="imagePreviews.length > 1">
+        <div class="thumb"
+          *ngFor="let url of imagePreviews; let i = index; trackBy: trackByIndex">
+          <img [src]="url" alt="preview {{i+1}}">
+          <ion-button fill="clear" size="small" class="remove"
+            (click)="removeImage(i)">
+            <ion-icon name="close-outline"></ion-icon>
+          </ion-button>
+        </div>
+      </div>
 
-      <input #fileInput type="file" accept="image/*" multiple hidden
-        (change)="onFilesSelected($event)" />
-    </div>
-
-    <div class="thumbs" *ngIf="imagePreviews.length > 1">
-      <div class="thumb"
-        *ngFor="let url of imagePreviews; let i = index; trackBy: trackByIndex">
-        <img [src]="url" alt="preview {{i+1}}">
-        <ion-button fill="clear" size="small" class="remove"
-          (click)="removeImage(i)">
-          <ion-icon name="close-outline"></ion-icon>
+      <div class="image-actions">
+        <ion-button fill="solid" shape="round" class="add-btn"
+          (click)="pickImages()">
+          <ion-icon name="add-outline"></ion-icon>&nbsp;Añadir imágenes
         </ion-button>
+        <input #fileInput type="file" accept="image/*" multiple hidden
+          (change)="onFilesSelected($event)" />
       </div>
     </div>
 
-    <ion-input placeholder="Título del producto" fill="outline" mode="md"
-      formControlName="title"></ion-input>
-    <ion-textarea placeholder="Descripción" fill="outline" mode="md"
-      auto-grow="true" formControlName="description"></ion-textarea>
-    <ion-input placeholder="Precio de costo ($)" type="number"
-      inputmode="decimal" step="0.01" min="0" fill="outline" mode="md"
-      formControlName="costPrice"></ion-input>
-    <ion-input placeholder="Precio de venta ($)" type="number"
-      inputmode="decimal" step="0.01" min="0" fill="outline" mode="md"
-      formControlName="salePrice"></ion-input>
+    <!-- Datos básicos -->
+    <div class="card">
+      <h2 class="section-title">
+        <ion-icon name="pricetag-outline"></ion-icon> Datos del producto
+      </h2>
 
-    <div class="stock-row">
-      <ion-input placeholder="Stock inicial" type="number" min="0"
-        inputmode="numeric" fill="outline" mode="md"
-        formControlName="stock"></ion-input>
-      <ion-button size="small" fill="outline" class="step-btn"
-        (click)="decStock($event)">
-        <ion-icon name="remove-outline"></ion-icon>
-      </ion-button>
-      <ion-button size="small" fill="outline" class="step-btn"
-        (click)="incStock($event)">
-        <ion-icon name="add-outline"></ion-icon>
-      </ion-button>
+      <ion-list class="form-list" inset="true">
+        <!-- Título -->
+        <ion-item mode="md" fill="outline" class="field">
+          <ion-icon slot="start" name="text-outline"></ion-icon>
+          <ion-label position="floating">Título del producto</ion-label>
+          <ion-input formControlName="title"></ion-input>
+        </ion-item>
+
+        <!-- Descripción -->
+        <ion-item mode="md" fill="outline" class="field">
+          <ion-icon slot="start" name="document-text-outline"></ion-icon>
+          <ion-label position="floating">Descripción</ion-label>
+          <ion-textarea auto-grow="true"
+            formControlName="description"></ion-textarea>
+        </ion-item>
+      </ion-list>
     </div>
 
-    <ion-item button detail="true" class="select-item" lines="full"
-      (click)="openCatSheet()">
-      <ion-label>{{ categoryLabel }}</ion-label>
-    </ion-item>
-    <ion-item button detail="true" class="select-item" lines="full"
-      (click)="openSupSheet()">
-      <ion-label>{{ supplierLabel }}</ion-label>
-    </ion-item>
-    <ion-item button detail="true" class="select-item" lines="none"
-      (click)="openTaxSheet()">
-      <ion-label>{{ taxLabel }}</ion-label>
-    </ion-item>
+    <!-- Precios e inventario -->
+    <div class="card">
+      <h2 class="section-title">
+        <ion-icon name="cash-outline"></ion-icon> Precios e inventario
+      </h2>
+
+      <ion-grid class="grid">
+        <ion-row>
+          <ion-col size="12" sizeMd="6">
+            <ion-item mode="md" fill="outline" class="field field--stacked">
+              <ion-icon slot="start" name="wallet-outline"></ion-icon>
+              <ion-label position="stacked">Precio de costo ($)</ion-label>
+              <ion-input
+                type="number"
+                inputmode="decimal"
+                step="0.01"
+                min="0"
+                formControlName="costPrice">
+              </ion-input>
+            </ion-item>
+          </ion-col>
+
+          <ion-col size="12" sizeMd="6">
+            <ion-item mode="md" fill="outline" class="field field--stacked">
+              <ion-icon slot="start" name="pricetags-outline"></ion-icon>
+              <ion-label position="stacked">Precio de venta ($)</ion-label>
+              <ion-input
+                type="number"
+                inputmode="decimal"
+                step="0.01"
+                min="0"
+                formControlName="salePrice">
+              </ion-input>
+            </ion-item>
+          </ion-col>
+
+          <ion-col size="12" sizeMd="6">
+            <ion-item mode="md" fill="outline" class="field field--stacked">
+              <ion-icon slot="start" name="cube-outline"></ion-icon>
+              <ion-label position="stacked">Stock inicial</ion-label>
+              <ion-input
+                type="number"
+                inputmode="numeric"
+                min="0"
+                formControlName="stock">
+              </ion-input>
+              <ion-buttons slot="end" class="stepper">
+                <ion-button size="small" fill="outline"
+                  (click)="decStock($event)">
+                  <ion-icon name="remove-outline"></ion-icon>
+                </ion-button>
+                <ion-button size="small" fill="outline"
+                  (click)="incStock($event)">
+                  <ion-icon name="add-outline"></ion-icon>
+                </ion-button>
+              </ion-buttons>
+            </ion-item>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+    </div>
+
+    <!-- Clasificación -->
+    <div class="card">
+      <h2 class="section-title">
+        <ion-icon name="funnel-outline"></ion-icon> Clasificación
+      </h2>
+
+      <ion-list class="form-list" inset="true">
+        <!-- Categoría -->
+        <ion-item mode="md" fill="outline" class="field">
+          <ion-icon slot="start" name="folder-open-outline"></ion-icon>
+          <ion-label>Categoría</ion-label>
+          <ion-select interface="popover" formControlName="categoryId"
+            placeholder="Seleccionar">
+            <ion-select-option *ngFor="let c of categories" [value]="c.id">{{
+              c.label }}</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <!-- Proveedor -->
+        <ion-item mode="md" fill="outline" class="field">
+          <ion-icon slot="start" name="business-outline"></ion-icon>
+          <ion-label>Proveedor (opcional)</ion-label>
+          <ion-select interface="popover" formControlName="supplierId"
+            placeholder="Seleccionar">
+            <ion-select-option *ngFor="let s of suppliers" [value]="s.id">{{
+              s.label }}</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <!-- Impuesto -->
+        <ion-item mode="md" fill="outline" class="field">
+          <ion-icon slot="start" name="receipt-outline"></ion-icon>
+          <ion-label>Impuesto</ion-label>
+          <ion-select interface="popover" formControlName="taxId"
+            placeholder="Seleccionar">
+            <ion-select-option *ngFor="let t of taxes" [value]="t.id">{{ t.label
+              }}</ion-select-option>
+          </ion-select>
+        </ion-item>
+      </ion-list>
+    </div>
+
   </div>
 </ion-content>
 
@@ -88,75 +187,3 @@
     Guardar
   </ion-button>
 </ion-footer>
-
-
-<ion-modal [isOpen]="isCatOpen" (didDismiss)="closeCat()" class="sheet"
-  [breakpoints]="[0,0.45,0.6]" [initialBreakpoint]="0.45">
-  <ng-template>
-    <ion-content>
-      <div class="sheet-header">
-        <ion-button fill="clear" size="small" (click)="closeCat()"><ion-icon
-            name="chevron-down-outline"></ion-icon></ion-button>
-        <div class="sheet-title">Categoría</div>
-        <ion-button fill="clear" size="small" (click)="applyCat()"><ion-icon
-            name="checkmark-outline"></ion-icon></ion-button>
-      </div>
-      <ion-list>
-        <ion-radio-group [(ngModel)]="tmpCategoryId">
-          <ion-item *ngFor="let c of categories">
-            <ion-label>{{ c.label }}</ion-label>
-            <ion-radio slot="end" [value]="c.id"></ion-radio>
-          </ion-item>
-        </ion-radio-group>
-      </ion-list>
-    </ion-content>
-  </ng-template>
-</ion-modal>
-
-
-<ion-modal [isOpen]="isSupOpen" (didDismiss)="closeSup()" class="sheet"
-  [breakpoints]="[0,0.45,0.6]" [initialBreakpoint]="0.45">
-  <ng-template>
-    <ion-content>
-      <div class="sheet-header">
-        <ion-button fill="clear" size="small" (click)="closeSup()"><ion-icon
-            name="chevron-down-outline"></ion-icon></ion-button>
-        <div class="sheet-title">Proveedor</div>
-        <ion-button fill="clear" size="small" (click)="applySup()"><ion-icon
-            name="checkmark-outline"></ion-icon></ion-button>
-      </div>
-      <ion-list>
-        <ion-radio-group [(ngModel)]="tmpSupplierId">
-          <ion-item *ngFor="let s of suppliers">
-            <ion-label>{{ s.label }}</ion-label>
-            <ion-radio slot="end" [value]="s.id"></ion-radio>
-          </ion-item>
-        </ion-radio-group>
-      </ion-list>
-    </ion-content>
-  </ng-template>
-</ion-modal>
-
-
-<ion-modal [isOpen]="isTaxOpen" (didDismiss)="closeTax()" class="sheet"
-  [breakpoints]="[0,0.45,0.6]" [initialBreakpoint]="0.45">
-  <ng-template>
-    <ion-content>
-      <div class="sheet-header">
-        <ion-button fill="clear" size="small" (click)="closeTax()"><ion-icon
-            name="chevron-down-outline"></ion-icon></ion-button>
-        <div class="sheet-title">Impuesto</div>
-        <ion-button fill="clear" size="small" (click)="applyTax()"><ion-icon
-            name="checkmark-outline"></ion-icon></ion-button>
-      </div>
-      <ion-list>
-        <ion-radio-group [(ngModel)]="tmpTaxId">
-          <ion-item *ngFor="let t of taxes">
-            <ion-label>{{ t.label }}</ion-label>
-            <ion-radio slot="end" [value]="t.id"></ion-radio>
-          </ion-item>
-        </ion-radio-group>
-      </ion-list>
-    </ion-content>
-  </ng-template>
-</ion-modal>

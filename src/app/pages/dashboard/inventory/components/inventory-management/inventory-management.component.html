@@ -122,16 +122,19 @@
 
     <ng-template #emptyOrSearchEmpty>
       <!-- si hay búsqueda pero no resultados -->
-      <div class="no-results" *ngIf="query?.trim(); else emptyState">
-        <p>No encontramos resultados para “{{ query }}”.</p>
-        <ion-button expand="block" fill="outline"
-          (click)="clearSearch()">Limpiar búsqueda</ion-button>
+      <div class="no-results">
+        <div class="empty">
+          <img class="hero-img" src="assets/images/inventory-home.png"
+            alt="Inventario" />
+          <h2>Sin inventario</h2>
+          <p>No encontramos resultados para el inventario.</p>
+        </div>
       </div>
 
       <!-- estado vacío -->
       <ng-template #emptyState>
         <div class="hero">
-          <img class="hero-img" src="assets/images/products.png"
+          <img class="hero-img" src="assets/images/inventory-home.png"
             alt="Inventario vacío" />
           <h2 class="hero-title">Inventario vacío</h2>
           <p class="hero-subtitle">

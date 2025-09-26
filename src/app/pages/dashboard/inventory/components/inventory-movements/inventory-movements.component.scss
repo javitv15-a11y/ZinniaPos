@@ -1,0 +1,41 @@
+/* ===== Header ===== */
+ion-header { --border-width: 0 0 0.5px 0; }
+.title { font-weight: 600; }
+
+/* ===== Listado ===== */
+.movs ion-item-divider {
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.mov-item {
+  --inner-padding-end: 12px;
+  --min-height: 60px;
+}
+
+/* Icono circular (verde para entrada, rojo para salida) */
+.ico {
+  width: 28px; height: 28px; min-width: 28px;
+  border-radius: 999px;
+  display: grid; place-items: center;
+  margin-right: 12px;
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+}
+.ico.in  { background: #EAF8F3; border-color: #D7F1E7; }
+.ico.out { background: #FDEDEE; border-color: #F8D7DB; }
+.ico ion-icon { font-size: 18px; color: #6b7280; }
+
+/* Título y meta */
+ion-label .title { font-weight: 600; color: #111; }
+ion-label .meta  { margin-top: 4px; color: #6b7280; font-size: 13px; display: flex; gap: 16px; }
+.meta .left  { white-space: nowrap; }
+.meta .right { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ===== Skeleton ===== */
+.skel { background: #f3f4f6; }
+.line { width: 160px; height: 14px; background: #f3f4f6; border-radius: 6px; }
+.sub  { width: 220px; height: 12px; background: #f3f4f6; border-radius: 6px; margin-top: 8px; }
+
+/* ===== Empty & Error ===== */
+.empty, .error-state { padding: 16px; color: #6b7280; }

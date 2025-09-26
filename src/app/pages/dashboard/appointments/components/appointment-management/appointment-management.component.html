@@ -9,12 +9,10 @@
   </ion-toolbar>
 </ion-header>
 
-
 <ion-content id="main-content" fullscreen="true">
   <ion-refresher slot="fixed" (ionRefresh)="load($event)">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
-
 
   <div class="search-wrap">
     <ion-searchbar
@@ -26,12 +24,12 @@
     </ion-searchbar>
 
     <ion-menu-toggle menu="filters" [autoHide]="false">
-      <ion-button class="filter" fill="clear" aria-label="Filtrar" (click)="openFilters()">
+      <ion-button class="filter" fill="clear" aria-label="Filtrar"
+        (click)="openFilters()">
         <ion-icon slot="icon-only" name="funnel-outline"></ion-icon>
       </ion-button>
     </ion-menu-toggle>
   </div>
-
 
   <div class="chips" *ngIf="activeFilter">
     <ion-chip (click)="clearFilter()">
@@ -40,27 +38,28 @@
     </ion-chip>
   </div>
 
-
   <ng-container *ngIf="loading; else loaded">
     <ion-list>
       <ion-item *ngFor="let i of skeletons">
         <ion-label>
-          <h3><ion-skeleton-text animated style="width:60%"></ion-skeleton-text></h3>
-          <p><ion-skeleton-text animated style="width:40%"></ion-skeleton-text></p>
+          <h3><ion-skeleton-text animated
+              style="width:60%"></ion-skeleton-text></h3>
+          <p><ion-skeleton-text animated
+              style="width:40%"></ion-skeleton-text></p>
         </ion-label>
       </ion-item>
     </ion-list>
   </ng-container>
 
   <ng-template #loaded>
-    <ion-card *ngIf="error">
+    <ion-card *ngIf="error && !grouped.length">
       <ion-card-header><ion-card-title>Error</ion-card-title></ion-card-header>
       <ion-card-content>
         {{ error }}
-        <ion-button expand="block" fill="outline" (click)="load()">Reintentar</ion-button>
+        <ion-button expand="block" fill="outline"
+          (click)="load()">Reintentar</ion-button>
       </ion-card-content>
     </ion-card>
-
     <ng-container *ngIf="!error">
       <ng-container *ngIf="grouped.length; else emptyOrSearchEmpty">
         <ion-list *ngFor="let g of grouped">
@@ -68,22 +67,25 @@
             <ion-label>{{ g.label }}</ion-label>
           </ion-item-divider>
 
-          <ion-item *ngFor="let c of g.items; trackBy: trackById" button detail (click)="open(c)">
+          <ion-item *ngFor="let c of g.items; trackBy: trackById" button detail
+            (click)="open(c)">
             <ion-label>
               <h3 class="row-title">#{{ c.id }}</h3>
               <p class="row-sub">
-                {{ c.paciente }} • {{ c.date | date:"d 'de' MMM, y" }} • {{ c.start }} - {{ c.end }}
+                {{ c.paciente }} • {{ c.date | date:"d 'de' MMM, y" }} • {{
+                c.start }} - {{ c.end }}
               </p>
               <p class="row-type">{{ c.type }}</p>
             </ion-label>
 
-            <span class="status" [ngClass]="statusClassMap[c.status] || 'status--default'">
+            <span class="status"
+              [ngClass]="statusClassMap[c.status] || 'status--default'">
               {{ c.status }}
             </span>
 
             <ion-icon *ngIf="c.origen === 'whatsapp'" class="wa" slot="end"
-                      name="logo-whatsapp" aria-label="Abrir WhatsApp"
-                      (click)="openWhatsApp(c, $event)"></ion-icon>
+              name="logo-whatsapp" aria-label="Abrir WhatsApp"
+              (click)="openWhatsApp(c, $event)"></ion-icon>
           </ion-item>
         </ion-list>
       </ng-container>
@@ -91,18 +93,22 @@
       <ng-template #emptyOrSearchEmpty>
         <div class="no-results" *ngIf="query?.trim(); else emptyState">
           <p>No encontramos resultados para “{{ query }}”.</p>
-          <ion-button expand="block" fill="outline" (click)="clearSearch()">Limpiar búsqueda</ion-button>
+          <ion-button expand="block" fill="outline"
+            (click)="clearSearch()">Limpiar búsqueda</ion-button>
         </div>
 
         <ng-template #emptyState>
           <div class="hero">
-            <img class="hero-img" src="assets/images/appointments.png" alt="Gestión de Citas" />
+            <img class="hero-img" src="assets/images/appointments.png"
+              alt="Gestión de Citas" />
             <h2 class="hero-title">Gestión de Citas</h2>
             <p class="hero-subtitle">
-              Administra todas las citas y ajusta los estados según el seguimiento.
+              Administra todas las citas y ajusta los estados según el
+              seguimiento.
             </p>
             <div class="cta">
-              <ion-button expand="block" size="large" shape="round" (click)="onCreate()">Crear cita</ion-button>
+              <ion-button expand="block" size="large" shape="round"
+                (click)="onCreate()">Crear cita</ion-button>
             </div>
           </div>
         </ng-template>
@@ -111,8 +117,8 @@
   </ng-template>
 </ion-content>
 
-
-<ion-menu side="end" menuId="filters" contentId="main-content" class="filters-menu">
+<ion-menu side="end" menuId="filters" contentId="main-content"
+  class="filters-menu">
   <ion-header>
     <ion-toolbar>
       <ion-title>Filtros</ion-title>
@@ -128,18 +134,19 @@
       <ion-item-divider><ion-label>Estados</ion-label></ion-item-divider>
       <ion-item *ngFor="let s of statusOptions">
         <ion-checkbox slot="start" [checked]="selectedStatuses.has(s)"
-                      (ionChange)="toggleStatus(s, $event.detail.checked)"></ion-checkbox>
+          (ionChange)="toggleStatus(s, $event.detail.checked)"></ion-checkbox>
         <ion-label>{{ s }}</ion-label>
       </ion-item>
 
       <ion-item-divider><ion-label>Origen</ion-label></ion-item-divider>
       <ion-item *ngFor="let o of origenOptions">
         <ion-checkbox slot="start" [checked]="selectedOrigen.has(o)"
-                      (ionChange)="toggleOrigen(o, $event.detail.checked)"></ion-checkbox>
+          (ionChange)="toggleOrigen(o, $event.detail.checked)"></ion-checkbox>
         <ion-label>{{ o | titlecase }}</ion-label>
       </ion-item>
 
-      <ion-item-divider><ion-label>Fecha de actualización</ion-label></ion-item-divider>
+      <ion-item-divider><ion-label>Fecha de
+          actualización</ion-label></ion-item-divider>
       <ion-radio-group [(ngModel)]="dateFilter">
         <ion-item *ngFor="let d of updatedDateOptions">
           <ion-label>{{ d.label }}</ion-label>
@@ -150,7 +157,8 @@
 
     <div style="padding:12px 16px">
       <ion-button expand="block" (click)="applyAndClose()">Aplicar</ion-button>
-      <ion-button expand="block" fill="outline" (click)="resetFilters()">Restablecer</ion-button>
+      <ion-button expand="block" fill="outline"
+        (click)="resetFilters()">Restablecer</ion-button>
     </div>
   </ion-content>
 </ion-menu>

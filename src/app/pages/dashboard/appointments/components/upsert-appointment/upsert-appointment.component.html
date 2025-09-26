@@ -5,14 +5,15 @@
 
 <ion-content>
   <div class="container">
-    <ion-label class="title bold">Información de cliente</ion-label>
+    <!-- CAMBIO: Cliente -> Paciente -->
+    <ion-label class="title bold">Información del paciente</ion-label>
 
     <ion-item lines="none" class="bordered-item" (click)="selectCustomer()">
       <ion-input
         mode="md"
-        label="Cliente"
+        label="Paciente"                               
         labelPlacement="stacked"
-        placeholder="Selecciona un cliente"
+        placeholder="Selecciona un paciente"          
         [value]="selectedCustomerLabel"
         readonly>
       </ion-input>

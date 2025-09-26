@@ -1,0 +1,293 @@
+<ion-header translucent="true">
+  <ion-toolbar>
+    <ion-title class="title">Movimientos</ion-title>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" aria-label="Añadir" (click)="onQuickAdd()">
+        <ion-icon slot="icon-only" name="add-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content id="main-content" fullscreen="true">
+  <!-- refresco -->
+  <ion-refresher slot="fixed" (ionRefresh)="reload($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- ======= Buscador + pastilla de filtros ======= -->
+  <div class="search-card">
+    <div class="search-row search-with-pill">
+      <ion-searchbar
+        class="search"
+        [(ngModel)]="query"
+        placeholder="Buscar movimiento"
+        show-clear-button="never"
+        (ionInput)="applyFilter()">
+      </ion-searchbar>
+
+      <ion-button
+        class="filters-pill"
+        fill="clear"
+        size="small"
+        aria-label="Filtros"
+        (click)="openFilters()">
+        <ion-icon name="funnel-outline"></ion-icon>
+        <ion-badge *ngIf="activeFiltersCount">{{ activeFiltersCount
+          }}</ion-badge>
+      </ion-button>
+    </div>
+
+    <!-- Chips activos (Entradas / Salidas) -->
+    <div class="chips" *ngIf="activeFiltersCount">
+      <ion-chip *ngFor="let t of tiposArray" outline="true">
+        <ion-label>{{ t === 'in' ? 'Entradas' : 'Salidas' }}</ion-label>
+        <ion-icon name="close-outline" (click)="removeTipoChip(t)"></ion-icon>
+      </ion-chip>
+    </div>
+  </div>
+
+  <!-- ======= Modal de filtros ======= -->
+  <ion-modal [isOpen]="isFiltersModalOpen" (didDismiss)="closeFilters()"
+    breakpoints="[0, 0.5, 0.9]" initialBreakpoint="0.5">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-buttons slot="start">
+            <ion-button (click)="closeFilters()">
+              <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+          <ion-title>Filtrar por</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="clearAllFilters()">
+              <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content>
+        <ion-list lines="full">
+          <ion-list-header>Tipo de movimiento</ion-list-header>
+
+          <ion-item>
+            <ion-checkbox
+              slot="start"
+              [checked]="types.has('in')"
+              (ionChange)="onTipoChange('in', $event.detail.checked)">
+            </ion-checkbox>
+
+            <ion-icon name="arrow-up-outline" slot="start"
+              class="tipo-icon in"></ion-icon>
+            <ion-label>Movimiento de entrada</ion-label>
+          </ion-item>
+
+          <ion-item>
+            <ion-checkbox
+              slot="start"
+              [checked]="types.has('out')"
+              (ionChange)="onTipoChange('out', $event.detail.checked)">
+            </ion-checkbox>
+
+            <ion-icon name="arrow-down-outline" slot="start"
+              class="tipo-icon out"></ion-icon>
+            <ion-label>Movimiento de salida</ion-label>
+          </ion-item>
+        </ion-list>
+
+        <div style="padding:12px 16px 16px">
+          <ion-button expand="block"
+            (click)="applyFilters()">Aplicar</ion-button>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- skeletons -->
+  <ng-container *ngIf="loading; else loaded">
+    <ion-list>
+      <ion-item *ngFor="let i of skeletons">
+        <ion-avatar slot="start">
+          <ion-skeleton-text animated
+            style="width: 40px; height:40px;"></ion-skeleton-text>
+        </ion-avatar>
+        <ion-label>
+          <h3><ion-skeleton-text animated
+              style="width: 60%"></ion-skeleton-text></h3>
+          <p><ion-skeleton-text animated
+              style="width: 40%"></ion-skeleton-text></p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+  </ng-container>
+
+  <!-- contenido -->
+  <ng-template #loaded>
+    <ng-container *ngIf="filtered.length; else emptyOrSearchEmpty">
+      <ion-list>
+        <ion-item
+          *ngFor="let m of filtered; trackBy: trackById"
+          [class.in]="m.type === 'in'"
+          [class.out]="m.type === 'out'"
+          button
+          [detail]="false"
+          (click)="openMovement(m.id)">
+
+          <ion-avatar slot="start">
+            <ion-icon
+              [name]="m.type === 'in' ? 'download-outline' : 'exit-outline'"></ion-icon>
+          </ion-avatar>
+
+          <ion-label>
+            <h3 class="row-title">
+              {{ m.type === 'out' ? 'Salida' : 'Entrada' }}
+              <span *ngIf="m.subtype">- {{ m.subtype }}</span>
+            </h3>
+            <p class="row-sub">
+              <ng-container *ngIf="m.partner">
+                {{ m.type === 'out' ? 'Cliente' : 'Proveedor' }}: {{ m.partner
+                }} ·
+              </ng-container>
+              {{ m.items }} item{{ m.items > 1 ? 's' : '' }} ·
+              {{ m.date | date:'d \'de\' MMM, y' }}
+              <ng-container *ngIf="m.doc"> · Factura: #{{ m.doc
+                }}</ng-container>
+            </p>
+          </ion-label>
+
+          <ion-icon slot="end" name="chevron-forward"></ion-icon>
+        </ion-item>
+      </ion-list>
+    </ng-container>
+
+    <ng-template #emptyOrSearchEmpty>
+      <!-- si hay búsqueda pero no resultados -->
+      <div class="no-results" *ngIf="query?.trim(); else emptyState">
+        <div class="empty">
+          <img class="hero-img" src="assets/images/movements-home.png"
+            alt="Inventario" />
+          <h2>Sin movimientos</h2>
+          <p>No encontramos movimientos registrados.</p>
+        </div>
+      </div>
+
+      <!-- estado vacío -->
+      <ng-template #emptyState>
+        <div class="hero">
+          <img class="hero-img" src="assets/images/movements-home.png"
+            alt="Sin movimientos" />
+          <h2 class="hero-title">Aún no tienes movimientos registrados</h2>
+          <p class="hero-subtitle">
+            Aquí podrás ver todas las entradas y salidas de tu inventario.
+            Registra tu primera compra o venta para empezar a llevar el control.
+          </p>
+
+          <!-- CTA en dos columnas -->
+          <ion-grid class="cta">
+            <ion-row>
+              <ion-col size="6" sizeSm="6" sizeMd="6" sizeXs="12">
+                <ion-button expand="block" shape="round" color="success"
+                  (click)="addEntry()">
+                  Agregar Entrada
+                </ion-button>
+              </ion-col>
+              <ion-col size="6" sizeSm="6" sizeMd="6" sizeXs="12">
+                <ion-button expand="block" shape="round" color="danger"
+                  (click)="addExit()">
+                  Agregar Salida
+                </ion-button>
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+        </div>
+      </ng-template>
+    </ng-template>
+  </ng-template>
+</ion-content>
+
+<!-- ======= Menú lateral de filtros ======= -->
+<ion-menu menuId="filters" contentId="main-content" side="end"
+  class="filters-menu">
+  <ion-header>
+    <ion-toolbar>
+      <ion-title>Filtros</ion-title>
+      <ion-buttons slot="end">
+        <ion-button fill="clear" (click)="closeFilters()">
+          <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+        </ion-button>
+      </ion-buttons>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-content>
+    <ion-list>
+      <ion-item-divider>Tipo</ion-item-divider>
+      <ion-item>
+        <ion-label>Entradas</ion-label>
+        <ion-checkbox slot="end" [checked]="types.has('in')"
+          (ionChange)="toggleType('in', $event.detail.checked)"></ion-checkbox>
+      </ion-item>
+      <ion-item>
+        <ion-label>Salidas</ion-label>
+        <ion-checkbox slot="end" [checked]="types.has('out')"
+          (ionChange)="toggleType('out', $event.detail.checked)"></ion-checkbox>
+      </ion-item>
+    </ion-list>
+
+    <div class="filters-actions">
+      <ion-button expand="block" fill="outline"
+        (click)="resetFilters()">Restablecer</ion-button>
+      <ion-button expand="block" (click)="applyAndClose()">Aplicar</ion-button>
+    </div>
+  </ion-content>
+</ion-menu>
+
+
+<ion-modal
+  [isOpen]="isQuickAddOpen"
+  (didDismiss)="closeQuickAdd()"
+  breakpoints="[0, 0.45, 0.7, 0.95]"   
+  initialBreakpoint="0.7"              
+  cssClass="quick-sheet"
+>
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title class="sheet-title">{{ quickAddTitle }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button fill="clear" (click)="closeQuickAdd()">
+            <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <!-- OJO: el scroll debe estar en ion-content -->
+    <ion-content class="sheet-scroll">
+      <ion-list lines="full">
+        <ion-item button detail="false" (click)="selectQuickAction('compra_proveedor')">
+          <ion-icon slot="start" name="cart-outline"></ion-icon>
+          <ion-label>Compra a proveedor</ion-label>
+        </ion-item>
+
+        <ion-item button detail="false" (click)="selectQuickAction('devolucion_cliente')">
+          <ion-icon slot="start" name="return-down-back-outline"></ion-icon>
+          <ion-label>Devolución cliente</ion-label>
+        </ion-item>
+
+        <ion-item button detail="false" (click)="selectQuickAction('ajuste_inventario')">
+          <ion-icon slot="start" name="build-outline"></ion-icon>
+          <ion-label>Ajuste inventario</ion-label>
+        </ion-item>
+
+        <ion-item button detail="false" (click)="selectQuickAction('produccion')">
+          <ion-icon slot="start" name="cog-outline"></ion-icon>
+          <ion-label>Producción propia</ion-label>
+        </ion-item>
+      </ion-list>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+

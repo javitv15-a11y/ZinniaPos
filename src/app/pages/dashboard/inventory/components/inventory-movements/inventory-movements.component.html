@@ -1,0 +1,79 @@
+<ion-header translucent="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/inventory"></ion-back-button>
+    </ion-buttons>
+    <ion-title class="title">{{ productName }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <!-- ===== Skeleton ===== -->
+  <ng-container *ngIf="loading; else loaded">
+    <ion-list>
+      <ion-item lines="full">
+        <div class="ico skel"></div>
+        <ion-label>
+          <div class="line"></div>
+          <div class="sub"></div>
+        </ion-label>
+      </ion-item>
+      <ion-item lines="full">
+        <div class="ico skel"></div>
+        <ion-label>
+          <div class="line"></div>
+          <div class="sub"></div>
+        </ion-label>
+      </ion-item>
+      <ion-item lines="full">
+        <div class="ico skel"></div>
+        <ion-label>
+          <div class="line"></div>
+          <div class="sub"></div>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+  </ng-container>
+
+  <!-- ===== Content ===== -->
+  <ng-template #loaded>
+    <ng-container *ngIf="!error; else errorTpl">
+      <ion-list class="movs">
+        <ion-item-divider>Historial movimientos</ion-item-divider>
+
+        <ion-item
+          *ngFor="let m of items"
+          detail="false"
+          button="false"
+          lines="full"
+          class="mov-item"
+        >
+          <div class="ico" [class.in]="m.type==='entrada'" [class.out]="m.type==='salida'">
+            <ion-icon [name]="m.type==='entrada' ? 'arrow-down-circle' : 'arrow-up-circle'"></ion-icon>
+          </div>
+
+          <ion-label>
+            <div class="title">
+              {{ m.title }}
+            </div>
+            <div class="meta">
+              <span class="left">{{ m.metaLeft }}</span>
+              <span class="right">{{ m.metaRight }}</span>
+            </div>
+          </ion-label>
+        </ion-item>
+
+        <div *ngIf="items.length===0" class="empty">
+          No hay movimientos registrados.
+        </div>
+      </ion-list>
+    </ng-container>
+
+    <ng-template #errorTpl>
+      <div class="error-state">
+        <p>{{ error }}</p>
+        <ion-button fill="outline" (click)="load()">Reintentar</ion-button>
+      </div>
+    </ng-template>
+  </ng-template>
+</ion-content>

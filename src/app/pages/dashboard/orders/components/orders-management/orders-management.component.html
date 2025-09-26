@@ -108,10 +108,6 @@
                   <ng-container *ngIf="o.total != null"> • ${{ o.total |
                     number:'1.0-0' }}</ng-container>
                 </p>
-                <p class="row-meta" *ngIf="o.numero_celular">
-                  <span class="meta-label">Tel:</span>
-                  <span class="meta-value">{{ o.numero_celular }}</span>
-                </p>
               </ion-label>
               <div slot="end" class="end-actions">
                 <ion-badge [ngClass]="statusClass(o.estado)">{{ (o.estado ||
@@ -124,7 +120,7 @@
 
       <ng-template #empty>
         <div class="empty">
-          <img class="hero-img" src="assets/images/customers-patients.png"
+          <img class="hero-img" src="assets/images/orders-home.png"
             alt="Pedidos" />
           <h2>Sin pedidos</h2>
           <p>No hay resultados.</p>

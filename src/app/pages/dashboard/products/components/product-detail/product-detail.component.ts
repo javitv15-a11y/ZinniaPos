@@ -1,4 +1,3 @@
-// src/app/pages/dashboard/products/components/product-detail/product-detail.component.ts
 import { CommonModule } from "@angular/common";
 import {
   Component,
@@ -15,12 +14,15 @@ import {
   ActionSheetButton,
 } from "@ionic/angular";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
-import { Subscription } from "rxjs";
+import { Subscription, firstValueFrom } from "rxjs";
 import { FormsModule } from "@angular/forms";
 import {
   ProductService,
   ProductApi,
 } from "src/app/core/services/bussiness/product.service";
+
+// 👇 NUEVO: servicio para proveedores
+import { SupplierService } from "src/app/core/services/bussiness/supplier.service";
 
 type Status = "Activo" | "Inactivo";
 
@@ -52,7 +54,9 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     private productsSrv: ProductService,
     private alertCtrl: AlertController,
     private actionSheet: ActionSheetController,
-    private toastCtrl: ToastController
+    private toastCtrl: ToastController,
+    // 👇 inyección del servicio de proveedores
+    private supplierSrv: SupplierService
   ) {}
 
   @ViewChild("fileInput") fileInput!: ElementRef<HTMLInputElement>;
@@ -87,6 +91,9 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   private readonly CATEGORIES_URL =
     "https://codigofuentecorp.eastus.cloudapp.azure.com/zinnia-apis-php/public/categorias";
   private categoriesCache: Array<{ id: string; nombre: string }> | null = null;
+
+  // 👇 cache de proveedores para no pegarle mil veces a la API
+  private suppliersCache: Array<{ id: string; nombre: string }> | null = null;
 
   ngOnInit(): void {
     this.sub = this.route.paramMap.subscribe((pm) => {
@@ -241,7 +248,6 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     };
   }
 
- 
   async loadProduct(id: string) {
     this.loading = true;
     this.error = undefined;
@@ -275,6 +281,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       }
 
       await this.ensureCategoryName();
+      await this.ensureProviderName();
     } catch (e: any) {
       this.error = e?.message || "No se pudo cargar el producto";
       this.product = undefined;
@@ -282,7 +289,6 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       this.loading = false;
     }
   }
-
 
   private async ensureCategoryName() {
     if (!this.product) return;
@@ -293,6 +299,20 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     const categorias = await this.getCategoriesFromApi();
     const match = categorias.find((c) => String(c.id) === String(catId));
     if (match) this.product.categoryName = match.nombre;
+  }
+
+  private async ensureProviderName() {
+    if (!this.product) return;
+    if (this.product.providerName) return;
+
+    const provId = (this.apiProduct as any)?.proveedor_id;
+    if (!provId) return;
+
+    const proveedores = await this.getSuppliersFromApi();
+    const match = proveedores.find((p) => String(p.id) === String(provId));
+    if (match) {
+      this.product.providerName = match.nombre;
+    }
   }
 
   reload() {
@@ -378,6 +398,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       await this.presentToast(e?.message || "No se pudo eliminar");
     }
   }
+
   async editInventory() {
     if (!this.product) return;
     const alert = await this.alertCtrl.create({
@@ -414,7 +435,6 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     });
     await alert.present();
   }
-
 
   openEdit() {
     if (!this.product || !this.apiProduct) return;
@@ -534,6 +554,48 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     }
   }
 
+  // 👇 NUEVO: proveedores desde la API (vía SupplierService)
+  private async getSuppliersFromApi(): Promise<
+    Array<{ id: string; nombre: string }>
+  > {
+    if (this.suppliersCache) return this.suppliersCache;
+    try {
+      // Soporta implementación con o sin parámetro userId
+      const obs: any = (this.supplierSrv as any).getAllSuppliers
+        ? (this.supplierSrv as any).getAllSuppliers("") // el backend ignora userId
+        : (this.supplierSrv as any).list?.();
+
+      const arr: any[] = await firstValueFrom(obs);
+      const list = (arr || [])
+        .map((raw: any) => {
+          const id = String(
+            raw?.id ?? raw?.proveedor_id ?? raw?._id ?? ""
+          ).trim();
+          const nombre =
+            String(raw?.nombre ?? raw?.name ?? "").trim() || `Proveedor ${id}`;
+          return id ? { id, nombre } : null;
+        })
+        .filter(Boolean) as Array<{ id: string; nombre: string }>;
+      list.sort((a, b) => a.nombre.localeCompare(b.nombre));
+      this.suppliersCache = list;
+      return list;
+    } catch (e) {
+      await this.presentToast("No se pudieron cargar proveedores");
+      return [];
+    }
+  }
+
+  setAsCover() {
+    if (!this.product || !this.product.images?.length) return;
+    const i = this.selectedIndex;
+    if (i <= 0) return;
+    const imgs = [...this.product.images];
+    const [picked] = imgs.splice(i, 1);
+    imgs.unshift(picked);
+    this.product.images = imgs;
+    this.selectedIndex = 0;
+  }
+
   async chooseCategory() {
     const opciones = await this.getCategoriesFromApi();
     const buttons: ActionSheetButton[] = opciones.map((o) => ({
@@ -551,12 +613,13 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     await sheet.present();
   }
 
+  // 👇 ACTUALIZADO: consume proveedores reales
   async chooseProvider() {
-    const opciones = [
-      { id: "10", nombre: "Proveedor Tecnología" },
-      { id: "11", nombre: "Proveedor Principal" },
-      { id: "12", nombre: "Proveedor Secundario" },
-    ];
+    const opciones = await this.getSuppliersFromApi();
+    if (!opciones.length) {
+      await this.presentToast("No hay proveedores disponibles");
+      return;
+    }
     const buttons: ActionSheetButton[] = opciones.map((o) => ({
       text: o.nombre,
       handler: () => {

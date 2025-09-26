@@ -73,12 +73,15 @@ export class UpsertAppointmentComponent implements OnInit {
 
   public customers: ClienteApi[] = [];
   public selectedCustomer?: ClienteApi;
+
+  // CAMBIO: textos del selector → “paciente”
   private customerSelectCfg: ISelectModalConfig = {
-    headerTitle: "Seleccionar cliente",
+    headerTitle: "Seleccionar paciente",  // CAMBIO
     optionsList: [],
     actionButton: false,
     multiple: false,
   };
+
   private selectedClienteId: number | null = null;
 
   private openingDate = false;
@@ -115,9 +118,12 @@ export class UpsertAppointmentComponent implements OnInit {
     );
     return option?.name || "";
   }
+
+  // CAMBIO: label visible → “Paciente {id}”
   get selectedCustomerLabel(): string {
-    return this.selectedCustomer?.nombre || "";
+    return this.selectedCustomer?.nombre || (this.selectedCustomer?.id ? `Paciente ${this.selectedCustomer.id}` : "");
   }
+
   get timeRangeLabel(): string {
     const s = this.dateForm?.get("time")?.value || "";
     const e = this.dateForm?.get("timeEnd")?.value || "";
@@ -237,6 +243,7 @@ export class UpsertAppointmentComponent implements OnInit {
       });
     });
   }
+
   private async loadCustomers() {
     try {
       const list = await this._clientesService.getClientes();
@@ -249,9 +256,11 @@ export class UpsertAppointmentComponent implements OnInit {
       console.error("[Customers] error →", e);
     }
   }
+
   private mapClientesToSelectOptions(list: ClienteApi[]): ISelectOption[] {
     return (list || []).map((c) => ({
-      title: c.nombre ?? `Cliente ${c.id}`,
+      // CAMBIO: títulos visibles como Paciente
+      title: c.nombre ?? `Paciente ${c.id}`,      // CAMBIO
       subtitle: [c.correo, c.telefono].filter(Boolean).join(" • ") || undefined,
       value: c.id,
     }));
@@ -266,7 +275,7 @@ export class UpsertAppointmentComponent implements OnInit {
       return;
     }
     if (!this.selectedClienteId) {
-      await this.toast("Selecciona un cliente antes de confirmar", "danger");
+      await this.toast("Selecciona un paciente antes de confirmar", "danger"); // CAMBIO
       return;
     }
 
@@ -280,7 +289,7 @@ export class UpsertAppointmentComponent implements OnInit {
       this.addMinutes(horaInicio, 60);
 
     const form = {
-      ClienteId: String(this.selectedClienteId),
+      ClienteId: String(this.selectedClienteId), // el backend espera ClienteId
       TipoConsulta: String(tipoConsulta),
       FechaCita: fecha,
       HoraInicio: horaInicio,
@@ -289,7 +298,13 @@ export class UpsertAppointmentComponent implements OnInit {
       Observaciones: this.observaciones?.trim() || "Primera consulta médica",
     };
 
-    const endpoints = ["/citas", "/citas/", "/appointments", "/appointments/"];
+    // CAMBIO: endpoints para crear cita (primero absolutos, luego relativo como fallback)
+    const endpoints = [
+      "https://codigofuentecorp.eastus.cloudapp.azure.com/zinnia-apis-php/public/citas",
+      "https://codigofuentecorp.eastus.cloudapp.azure.com/zinnia-apis-php/public/citas/",
+      "/citas",   // por si tienes environment.apiBase configurado
+    ];
+
     let lastErr: any;
 
     try {
@@ -324,7 +339,6 @@ export class UpsertAppointmentComponent implements OnInit {
     }
   }
 
-  
   private todayISO(): string {
     const d = new Date();
     const yyyy = d.getFullYear();
@@ -336,9 +350,7 @@ export class UpsertAppointmentComponent implements OnInit {
     const [h, m] = (hhmm || "00:00").split(":").map(Number);
     const base = new Date();
     base.setHours(h || 0, m || 0, 0, 0);
-    base.setMinutes(
-      base.getMinutes() + (Number.isFinite(minutes) ? minutes : 0)
-    );
+    base.setMinutes(base.getMinutes() + (Number.isFinite(minutes) ? minutes : 0));
     const hh = String(base.getHours()).padStart(2, "0");
     const mm2 = String(base.getMinutes()).padStart(2, "0");
     return `${hh}:${mm2}`;

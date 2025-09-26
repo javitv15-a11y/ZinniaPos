@@ -1,0 +1,109 @@
+/* ===== Vista Detalle Proveedor ===== */
+.title {
+  font-weight: 600;
+}
+
+.box {
+  margin: 12px;
+  padding: 12px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.06) inset,
+    0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.section-title {
+  margin: 4px 0 12px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.contact .row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+  padding: 6px 0;
+  border-bottom: 1px dashed #e5e7eb;
+}
+.contact .row:last-child { border-bottom: 0; }
+
+.label  { color: #6b7280; }
+.value  { text-align: right; }
+
+.actions { margin-top: 4px; }
+.muted   { color: #6b7280; margin: 8px 4px 0; }
+
+/* ===== Modal de edición (sheet bonito) ===== */
+
+/* Contenedor del modal: redondeado y altura tipo sheet */
+.edit-modal::part(content) {
+  border-radius: 16px 16px 0 0;
+  max-height: 85vh;
+}
+@media (min-width: 680px) {
+  .edit-modal::part(content) {
+    width: 520px;
+    margin: 0 auto;     /* centrado en pantallas anchas */
+    border-radius: 16px;
+    max-height: 92vh;
+  }
+}
+/* opcional: oscurecer un poquito el fondo del modal */
+.edit-modal::part(backdrop) {
+  background: rgba(17, 24, 39, 0.32);
+}
+
+.edit-header  { --background: #ffffff; }
+.edit-content { --background: #f8fafc; }
+
+/* Tarjeta del formulario */
+.form-card {
+  padding: 16px 14px 6px;
+}
+
+/* Lista blanca con sombra */
+.form-list {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.08);
+  padding: 8px 8px 10px;
+}
+
+/* Cada campo: borde outline controlado por ion-item */
+.field {
+  --background: #ffffff;
+  --border-radius: 12px;
+  --inner-padding-start: 8px;
+  --inner-padding-end: 8px;
+  --highlight-color-focused: var(--ion-color-primary);
+  margin: 8px 6px 12px;
+}
+
+/* Icono a la izquierda del campo */
+.field ion-icon[slot="start"] {
+  color: #64748b;
+  font-size: 20px;
+  margin-inline-end: 6px;
+}
+
+/* Afinar tipografía del input (sin tocar la muesca del label) */
+.field ion-input::part(native) {
+  font-size: 15px;
+}
+
+/* Footer con CTA fijo abajo */
+.edit-footer { --background: #ffffff; }
+.btn-save {
+  margin: 10px 12px;
+  height: 48px;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+/* ===== Pequeños ajustes responsivos ===== */
+@media (max-width: 360px) {
+  .section-title { font-size: 17px; }
+  .field { margin: 6px 4px 10px; }
+  .btn-save { height: 46px; }
+}

@@ -1,3 +1,6 @@
+<!-- ===============================================
+src/app/pages/dashboard/products/components/product-management/product-management.component.html
+=============================================== -->
 <ion-header translucent="true">
   <ion-toolbar>
     <ion-title class="title">Productos</ion-title>
@@ -9,39 +12,48 @@
   </ion-toolbar>
 </ion-header>
 
+<ion-content fullscreen="true">
+  <div class="search-card">
+    <div class="search-row search-with-pill">
+      <ion-searchbar
+        class="search"
+        [(ngModel)]="query"
+        placeholder="Buscar producto"
+        show-clear-button="never"
+        (ionInput)="applyQueryFilter()">
+      </ion-searchbar>
 
-<ion-content id="main-content" fullscreen="true">
-  <ion-refresher slot="fixed" (ionRefresh)="reload($event)">
-    <ion-refresher-content></ion-refresher-content>
-  </ion-refresher>
-
-  <div class="search-wrap">
-    <ion-searchbar
-      class="search"
-      [(ngModel)]="query"
-      placeholder="Buscar producto"
-      show-clear-button="never"
-      (ionInput)="applyFilter()">
-    </ion-searchbar>
-
-    <ion-menu-toggle menu="filters" [autoHide]="false">
-      <ion-button class="filter" fill="clear" aria-label="Filtrar"
+      <ion-button
+        class="filters-pill"
+        fill="clear"
+        size="small"
+        aria-label="Filtros"
         (click)="openFilters()">
-        <ion-icon slot="icon-only" name="funnel-outline"></ion-icon>
-        <span class="filter-badge" *ngIf="activeFilterCount">{{
-          activeFilterCount }}</span>
+        <ion-icon name="funnel-outline"></ion-icon>
+        <ion-badge *ngIf="activeFiltersCount">{{ activeFiltersCount
+          }}</ion-badge>
       </ion-button>
-    </ion-menu-toggle>
+    </div>
+
+    <!-- Chips -->
+    <div class="chips" *ngIf="activeFiltersCount">
+      <!-- Estados (múltiple) -->
+      <ion-chip *ngFor="let e of estadosArray" outline="true">
+        <ion-label>{{ e | titlecase }}</ion-label>
+        <ion-icon name="close-outline"
+          (click)="removeFilterChip('estado', e)"></ion-icon>
+      </ion-chip>
+
+      <!-- Categoría (única) -->
+      <ion-chip *ngIf="filters.categoria !== 'todas'" outline="true">
+        <ion-label>{{ categoriaSummary || 'Categoría' }}</ion-label>
+        <ion-icon name="close-outline"
+          (click)="removeFilterChip('categoria')"></ion-icon>
+      </ion-chip>
+    </div>
   </div>
 
-
-  <div class="chips" *ngIf="activeFilter">
-    <ion-chip (click)="clearFilter()">
-      <ion-label>{{ activeFilter }}</ion-label>
-      <ion-icon name="close-circle"></ion-icon>
-    </ion-chip>
-  </div>
-
+  <!-- Loading -->
   <ng-container *ngIf="loading; else loaded">
     <ion-list>
       <ion-item *ngFor="let i of skeletons">
@@ -61,106 +73,161 @@
     </ion-list>
   </ng-container>
 
-
+  <!-- Loaded -->
   <ng-template #loaded>
-    <ng-container *ngIf="filtered.length; else emptyOrSearchEmpty">
-      <ion-list>
-        <ion-item
-          *ngFor="let p of filtered; trackBy: trackById"
-          button
-          detail
-          [routerLink]="['../', p.id]"
-          routerDirection="forward">
-
-          <div class="thumb" slot="start">
-            <img *ngIf="p.image; else noimg" [src]="p.image" alt="Producto" />
-            <ng-template #noimg><div class="noimg"></div></ng-template>
-          </div>
-
-          <ion-label>
-            <h3 class="row-title">{{ p.name }}</h3>
-            <p class="row-sub">{{ p.stock }} En stock</p>
-          </ion-label>
-
-          <span class="status"
-            [ngClass]="p.status === 'Activo' ? 'status--activo' : 'status--inactivo'">
-            {{ p.status }}
-          </span>
-        </ion-item>
-
-      </ion-list>
-    </ng-container>
-
-    <ng-template #emptyOrSearchEmpty>
-      <div class="no-results" *ngIf="query?.trim(); else emptyState">
-        <p>No encontramos resultados para “{{ query }}”.</p>
+    <ion-card *ngIf="error">
+      <ion-card-header><ion-card-title>Error</ion-card-title></ion-card-header>
+      <ion-card-content>
+        {{ error }}
         <ion-button expand="block" fill="outline"
-          (click)="clearSearch()">Limpiar búsqueda</ion-button>
-      </div>
+          (click)="loadProducts()">Reintentar</ion-button>
+      </ion-card-content>
+    </ion-card>
 
-      <ng-template #emptyState>
-        <div class="hero">
-          <img class="hero-img" src="assets/images/products.png"
-            alt="Gestión de Productos" />
-          <h2 class="hero-title">Gestión de Productos</h2>
-          <p class="hero-subtitle">
-            Crea tu primer producto para organizar precios, imágenes y
-            categorías. Luego podrás controlar su stock.
-          </p>
-          <div class="cta">
-            <ion-button expand="block" size="large" shape="round"
-              (click)="onAdd()">
-              Crear producto
-            </ion-button>
-          </div>
+    <ng-container *ngIf="!error">
+      <ng-container *ngIf="filtered.length; else empty">
+        <ion-list>
+          <ion-item
+            *ngFor="let p of filtered; trackBy: trackById"
+            button
+            detail
+            [routerLink]="['../', p.id]"
+            routerDirection="forward">
+
+            <div class="thumb" slot="start">
+              <img *ngIf="p.image; else noimg" [src]="p.image" alt="Producto" />
+              <ng-template #noimg><div class="noimg"></div></ng-template>
+            </div>
+
+            <ion-label>
+              <h3 class="row-title">{{ p.name }}</h3>
+              <p class="row-sub">{{ p.stock }} En stock</p>
+            </ion-label>
+
+            <ion-badge class="status"
+              [ngClass]="p.status === 'Activo' ? 'status--activo' : 'status--inactivo'">
+              {{ p.status }}
+            </ion-badge>
+          </ion-item>
+        </ion-list>
+      </ng-container>
+
+      <ng-template #empty>
+        <div class="empty">
+          <img class="hero-img" src="assets/images/product-home.png"
+            alt="Productos" />
+          <h2>Sin productos</h2>
+          <p>No hay resultados.</p>
         </div>
       </ng-template>
-    </ng-template>
+    </ng-container>
   </ng-template>
+
+  <!-- ============ SHEET INFERIOR "FILTRAR POR" (igual a Pedidos) ============ -->
+  <ion-modal
+    [isOpen]="isFiltersModalOpen"
+    (didDismiss)="closeFilters()"
+    breakpoints="[0, 0.5, 0.9]"
+    initialBreakpoint="0.5">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-buttons slot="start">
+            <ion-button *ngIf="filtersPage==='root'; else backBtn"
+              fill="clear" color="medium"
+              (click)="closeFilters()" aria-label="Cerrar">
+              <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+            </ion-button>
+            <ng-template #backBtn>
+              <ion-button fill="clear" color="medium"
+                (click)="filtersPage='root'" aria-label="Atrás">
+                <ion-icon slot="icon-only"
+                  name="chevron-back-outline"></ion-icon>
+              </ion-button>
+            </ng-template>
+          </ion-buttons>
+
+          <ion-buttons slot="end">
+            <ion-button *ngIf="filtersPage==='root'; else applyBtn"
+              fill="clear" color="medium"
+              (click)="clearAllFilters()" aria-label="Restablecer">
+              <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
+            </ion-button>
+            <ng-template #applyBtn>
+              <ion-button fill="clear" color="medium"
+                (click)="applyFilters()" aria-label="Aplicar">
+                <ion-icon slot="icon-only" name="checkmark-outline"></ion-icon>
+              </ion-button>
+            </ng-template>
+          </ion-buttons>
+
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content>
+        <!-- Página raíz -->
+        <ng-container *ngIf="filtersPage==='root'">
+          <ion-list lines="full">
+            <ion-item button detail (click)="openFiltersPage('estado')">
+              <ion-label class="ion-text-wrap">
+                <p class="item-hint">Estado</p>
+                <h2 class="item-value">{{ estadoSummary || 'Todos' }}</h2>
+              </ion-label>
+            </ion-item>
+
+            <ion-item button detail (click)="openFiltersPage('categoria')">
+              <ion-label class="ion-text-wrap">
+                <p class="item-hint">Categoría</p>
+                <h2 class="item-value">{{ categoriaSummary || 'Todas' }}</h2>
+              </ion-label>
+            </ion-item>
+          </ion-list>
+        </ng-container>
+
+        <!-- Página ESTADO (múltiple) -->
+        <ng-container *ngIf="filtersPage==='estado'">
+          <ion-list lines="full">
+            <ion-list-header>Estado</ion-list-header>
+
+            <ion-item>
+              <ion-checkbox
+                slot="start"
+                [checked]="filters.estados.has('activo')"
+                (ionChange)="onEstadoChange('activo', $event.detail.checked)">
+              </ion-checkbox>
+              <ion-label>Activo</ion-label>
+            </ion-item>
+
+            <ion-item>
+              <ion-checkbox
+                slot="start"
+                [checked]="filters.estados.has('inactivo')"
+                (ionChange)="onEstadoChange('inactivo', $event.detail.checked)">
+              </ion-checkbox>
+              <ion-label>Inactivo</ion-label>
+            </ion-item>
+          </ion-list>
+        </ng-container>
+
+        <!-- Página CATEGORÍA (única) -->
+        <ng-container *ngIf="filtersPage==='categoria'">
+          <ion-list lines="full">
+            <ion-list-header>Categoría</ion-list-header>
+            <ion-radio-group [value]="filters.categoria"
+              (ionChange)="onCategoriaChange($event.detail.value)">
+              <ion-item>
+                <ion-label>Todas</ion-label>
+                <ion-radio slot="end" value="todas"></ion-radio>
+              </ion-item>
+              <ion-item *ngFor="let c of categoryOptions">
+                <ion-label>{{ c.name }}</ion-label>
+                <ion-radio slot="end" [value]="c.id"></ion-radio>
+              </ion-item>
+            </ion-radio-group>
+          </ion-list>
+        </ng-container>
+
+      </ion-content>
+    </ng-template>
+  </ion-modal>
 </ion-content>
-
-
-<ion-menu menuId="filters" contentId="main-content" side="end"
-  class="filters-menu">
-  <ion-header>
-    <ion-toolbar>
-      <ion-title>Filtros</ion-title>
-      <ion-buttons slot="end">
-        <ion-button fill="clear" (click)="closeFilters()">
-          <ion-icon slot="icon-only" name="close-outline"></ion-icon>
-        </ion-button>
-      </ion-buttons>
-    </ion-toolbar>
-  </ion-header>
-
-  <ion-content>
-    <ion-list>
-      <ion-item-divider>Estado</ion-item-divider>
-      <ion-item *ngFor="let s of statusOptions">
-        <ion-label>{{ s }}</ion-label>
-        <ion-checkbox slot="end" [checked]="selectedStatuses.has(s)"
-          (ionChange)="toggleStatus(s, $event.detail.checked)"></ion-checkbox>
-      </ion-item>
-
-      <ion-item-divider>Categorías</ion-item-divider>
-      <ion-item *ngFor="let c of categoryOptions">
-        <ion-label>{{ c.name }}</ion-label>
-        <ion-checkbox slot="end" [checked]="selectedCategories.has(c.id)"
-          (ionChange)="toggleCategory(c.id, $event.detail.checked)"></ion-checkbox>
-      </ion-item>
-
-      <ion-item-divider>Proveedores</ion-item-divider>
-      <ion-item *ngFor="let pr of providerOptions">
-        <ion-label>{{ pr.name }}</ion-label>
-        <ion-checkbox slot="end" [checked]="selectedProviders.has(pr.id)"
-          (ionChange)="toggleProvider(pr.id, $event.detail.checked)"></ion-checkbox>
-      </ion-item>
-    </ion-list>
-
-    <div class="filters-actions">
-      <ion-button expand="block" fill="outline"
-        (click)="resetFilters()">Restablecer</ion-button>
-      <ion-button expand="block" (click)="applyAndClose()">Aplicar</ion-button>
-    </div>
-  </ion-content>
-</ion-menu>

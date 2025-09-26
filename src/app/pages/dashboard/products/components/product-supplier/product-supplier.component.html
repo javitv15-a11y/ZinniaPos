@@ -5,65 +5,99 @@
 
 <ion-content>
   <div class="container">
-    <form class="form" [formGroup]="supplierForm" *ngIf="supplierForm">
+    <form class="form" [formGroup]="supplierForm" (ngSubmit)="onSubmit()" *ngIf="supplierForm">
+      <!-- Nombre -->
       <div class="row">
         <div class="group">
           <ion-input
-            placeholder="Nombre"
+            label="Nombre"
+            labelPlacement="floating"
+            placeholder="Nombre del proveedor"
             fill="outline"
             mode="md"
-            formControlName="name">
+            formControlName="name"
+            autocapitalize="words"
+            autocomplete="name">
           </ion-input>
+          <ion-note color="danger" *ngIf="isInvalid('name')">
+            El nombre es obligatorio (mínimo 2 caracteres).
+          </ion-note>
         </div>
       </div>
 
+      <!-- Teléfono -->
       <div class="row">
         <div class="group">
           <ion-input
-            placeholder="Teléfono / Celular"
+            label="Teléfono / Celular"
+            labelPlacement="floating"
             type="tel"
+            inputmode="tel"
+            placeholder="3001234567"
             fill="outline"
             mode="md"
-            formControlName="phone">
+            formControlName="phone"
+            maxlength="20">
           </ion-input>
+          <ion-note color="danger" *ngIf="isInvalid('phone')">
+            El teléfono es obligatorio.
+          </ion-note>
         </div>
       </div>
 
+      <!-- Correo -->
       <div class="row">
         <div class="group">
           <ion-input
-            placeholder="Correo electrónico"
+            label="Correo electrónico"
+            labelPlacement="floating"
             type="email"
+            inputmode="email"
+            placeholder="correo@dominio.com"
             fill="outline"
             mode="md"
-            formControlName="email">
+            formControlName="email"
+            autocomplete="email">
           </ion-input>
+          <ion-note color="danger" *ngIf="isInvalid('email')">
+            Ingresa un correo válido.
+          </ion-note>
         </div>
       </div>
 
+      <!-- Dirección -->
       <div class="row">
         <div class="group">
           <ion-input
-            placeholder="Dirección"
+            label="Dirección"
+            labelPlacement="floating"
             type="text"
+            placeholder="Calle 123 #45-67"
             fill="outline"
             mode="md"
-            formControlName="address">
+            formControlName="address"
+            autocomplete="street-address">
           </ion-input>
+          <ion-note color="danger" *ngIf="isInvalid('address')">
+            La dirección es obligatoria.
+          </ion-note>
         </div>
       </div>
+
+      <!-- Botón oculto para submit al presionar Enter -->
+      <button type="submit" style="display:none"></button>
     </form>
   </div>
 </ion-content>
 
-<ion-footer class="ion-no-border footer">
+<ion-footer class="ion-no-border footer" *ngIf="supplierForm">
   <ion-button
     mode="md"
     expand="block"
     fill="solid"
-    *ngIf="supplierForm"
     [disabled]="supplierForm.invalid || saving"
     (click)="onSubmit()">
-    Guardar
+    <ion-spinner *ngIf="saving" name="dots" class="ion-margin-end"></ion-spinner>
+    {{ saving ? 'Guardando...' : 'Guardar' }}
   </ion-button>
 </ion-footer>

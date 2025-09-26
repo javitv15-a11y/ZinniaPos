@@ -1,0 +1,314 @@
+<app-header
+    [settingHeader]="settingHeader"
+    [customActionCompleted]="actionCompleted.bind(this)">
+</app-header>
+
+<ion-content [fullscreen]="true" forceOverscroll="false" class="fill">
+    <!-- ========= PROVEEDOR ========= -->
+    <div class="container">
+        <div class="section" *ngIf="!selectedSupplier">
+            <ion-label class="title bold">Información de proveedor</ion-label>
+            <form class="form" [formGroup]="supplierForm" *ngIf="supplierForm">
+                <ion-button mode="md" expand="block" fill="outline"
+                    (click)="supplierModalOpen = true">
+                    Buscar proveedor
+                </ion-button>
+            </form>
+        </div>
+
+        <div class="section" *ngIf="selectedSupplier">
+            <div class="section-header">
+                <ion-label class="title bold">Información de
+                    proveedor</ion-label>
+                <button class="remove-btn" type="button"
+                    (click)="removeSelectedSupplier()">
+                    <ion-icon name="close-outline"></ion-icon>
+                </button>
+            </div>
+
+            <div class="supplier-info">
+                <div class="supplier-field">
+                    <label>Proveedor</label><span>{{ selectedSupplier.name
+                        }}</span>
+                </div>
+                <div class="supplier-field" *ngIf="selectedSupplier.email">
+                    <label>Correo electrónico</label><span>{{
+                        selectedSupplier.email }}</span>
+                </div>
+                <div class="supplier-field" *ngIf="selectedSupplier.phone">
+                    <label>Teléfono</label><span>{{ selectedSupplier.phone
+                        }}</span>
+                </div>
+                <div class="supplier-field" *ngIf="selectedSupplier.address">
+                    <label>Dirección</label><span>{{ selectedSupplier.address
+                        }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========= LISTA DE PRODUCTOS ========= -->
+    <div class="container">
+        <form class="form" [formGroup]="productsForm" *ngIf="productsForm">
+            <ion-label class="title bold">Lista de productos</ion-label>
+            <ion-button mode="md" expand="block" fill="outline"
+                (click)="openProductsModal()">
+                Agregar productos
+            </ion-button>
+        </form>
+
+        <ng-container *ngIf="items.length > 0">
+            <div class="section">
+                <div class="products-list">
+                    <div class="product-item"
+                        *ngFor="let item of items; trackBy: trackByItemId">
+                        <!-- icono -->
+                        <div class="product-icon">
+                            <ion-thumbnail>
+                                <img [src]="getImageSrc(item.product)"
+                                    [alt]="item.product.name || 'Producto'" />
+                            </ion-thumbnail>
+                        </div>
+
+                        <!-- contenido -->
+                        <div class="product-content">
+                            <!-- cabecera -->
+                            <div class="product-header">
+                                <div class="product-info">
+                                    <h3>{{ item.product.name }}</h3>
+                                </div>
+                                <button class="delete-btn" type="button"
+                                    (click)="removeItem(item.id)"
+                                    aria-label="Eliminar">
+                                    <span class="delete-icon"><ion-icon
+                                            name="trash-outline"></ion-icon></span>
+                                </button>
+                            </div>
+
+                            <!-- precios: costo / venta -->
+                            <div class="field-grid">
+                                <!-- costo -->
+                                <div class="field-box">
+                                    <div class="field-label">Precio de costo
+                                        ($)</div>
+                                    <ion-input
+                                        inputmode="decimal"
+                                        type="number"
+                                        step="0.01"
+                                        [value]="item.product.purchasePrice"
+                                        (ionInput)="onCostInput(item, $event)">
+                                    </ion-input>
+                                </div>
+
+                                <!-- venta -->
+                                <div class="field-box">
+                                    <div class="field-label">Precio de venta
+                                        ($)</div>
+                                    <ion-input
+                                        inputmode="decimal"
+                                        type="number"
+                                        step="0.01"
+                                        [value]="item.product.salePrice ?? ''"
+                                        (ionInput)="onSaleInput(item, $event)">
+                                    </ion-input>
+                                </div>
+                            </div>
+
+                            <!-- cantidad y total -->
+                            <div class="meta-row">
+                                <div class="qty-box">
+                                    <div class="field-label">Cantidad</div>
+                                    <div class="qty-inner">
+                                        <div class="qty-value">{{ item.quantity
+                                            }}</div>
+                                        <div class="qty-controls">
+                                            <button class="qty-btn"
+                                                type="button"
+                                                (click)="decreaseQuantity(item)"
+                                                aria-label="Restar">
+                                                <ion-icon
+                                                    name="remove-outline"></ion-icon>
+                                            </button>
+                                            <button class="qty-btn"
+                                                type="button"
+                                                (click)="increaseQuantity(item)"
+                                                aria-label="Sumar">
+                                                <ion-icon
+                                                    name="add-outline"></ion-icon>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="total-box">
+                                    <div class="field-label">Total</div>
+                                    <div class="total-amount">
+                                        {{ (item.product.purchasePrice *
+                                        item.quantity) | currency }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div> <!-- /product-item -->
+                </div>
+            </div>
+        </ng-container>
+    </div>
+
+    <!-- ========= PAGO ========= -->
+    <div class="container">
+        <ion-item lines="none">
+            <ion-label class="title bold">Pago</ion-label>
+        </ion-item>
+
+        <ion-item lines="none">
+            <ion-label class="text">Subtotal</ion-label>
+            <ion-note slot="end">{{ subtotal | currency }}</ion-note>
+        </ion-item>
+
+        <ion-item lines="none" (click)="addDiscount()">
+            <ion-label class="title">Agregar descuento</ion-label>
+            <ion-note slot="end">{{ discountValue | currency }}</ion-note>
+        </ion-item>
+
+        <ion-item lines="none">
+            <ion-label class="title">Impuesto estimado</ion-label>
+            <ion-note slot="end">{{ estimatedTax | currency }}</ion-note>
+        </ion-item>
+
+        <ion-item lines="none">
+            <ion-label class="title bold">Total</ion-label>
+            <ion-note slot="end"><strong>{{ total | currency
+                    }}</strong></ion-note>
+        </ion-item>
+
+        <ion-item
+            lines="none"
+            button
+            [disabled]="items.length === 0"
+            (click)="openPaymentMethodSheet()">
+            <ion-label class="title">Método de pago</ion-label>
+            <ion-note slot="end">{{ paymentMethodLabel || 'Seleccionar'
+                }}</ion-note>
+        </ion-item>
+
+        <div class="pay-hint" *ngIf="items.length === 0">
+            Agrega un producto para calcular el total y ver las formas de pago
+        </div>
+    </div>
+</ion-content>
+
+<ion-footer class="ion-no-border footer">
+    <ion-button mode="md" expand="block" fill="solid" [disabled]="isInvalid()"
+        (click)="confirmEntry()">
+        Confirmar
+    </ion-button>
+</ion-footer>
+
+<!-- ========= MODAL PROVEEDOR ========= -->
+<ion-modal
+    [isOpen]="supplierModalOpen"
+    (didDismiss)="supplierModalOpen = false"
+    [breakpoints]="[1]"
+    [initialBreakpoint]="1">
+    <ng-template>
+        <ion-header>
+            <ion-toolbar>
+                <ion-buttons slot="start">
+                    <ion-button (click)="supplierModalOpen = false">
+                        <ion-icon name="chevron-down-outline"></ion-icon>
+                    </ion-button>
+                </ion-buttons>
+                <ion-title>Proveedor</ion-title>
+                <ion-buttons slot="end">
+                    <ion-button (click)="supplierModalOpen = false">
+                        <ion-icon name="checkmark-outline"></ion-icon>
+                    </ion-button>
+                </ion-buttons>
+            </ion-toolbar>
+
+            <ion-toolbar>
+                <ion-searchbar
+                    placeholder="Buscar proveedor"
+                    animated="true"
+                    show-clear-button="focus"
+                    (ionInput)="onSupplierSearch($event)">
+                </ion-searchbar>
+            </ion-toolbar>
+        </ion-header>
+
+        <ion-content>
+            <ion-radio-group [value]="selectedSupplier?.id">
+                <ion-list>
+                    <ion-item button (click)="selectSupplier(s)"
+                        *ngFor="let s of filteredSuppliers">
+                        <ion-label>
+                            <h2>{{ s.name }}</h2>
+                            <p *ngIf="s.email">{{ s.email }}</p>
+                        </ion-label>
+                        <ion-radio slot="end" [value]="s.id"></ion-radio>
+                    </ion-item>
+                </ion-list>
+            </ion-radio-group>
+        </ion-content>
+    </ng-template>
+</ion-modal>
+
+<!-- ========= MODAL PRODUCTOS ========= -->
+<ion-modal
+    [isOpen]="productModalOpen"
+    (didDismiss)="productModalOpen = false"
+    [breakpoints]="[1]"
+    [initialBreakpoint]="1">
+    <ng-template>
+        <ion-header>
+            <ion-toolbar>
+                <ion-buttons slot="start">
+                    <ion-button (click)="productModalOpen = false">
+                        <ion-icon name="chevron-down-outline"></ion-icon>
+                    </ion-button>
+                </ion-buttons>
+                <ion-title>Productos</ion-title>
+                <ion-buttons slot="end">
+                    <ion-button (click)="confirmProducts()">
+                        <ion-icon name="checkmark-outline"></ion-icon>
+                    </ion-button>
+                </ion-buttons>
+            </ion-toolbar>
+
+            <ion-toolbar>
+                <ion-searchbar
+                    placeholder="Buscar producto"
+                    animated="true"
+                    show-clear-button="focus"
+                    (ionInput)="onProductSearch($event)">
+                </ion-searchbar>
+            </ion-toolbar>
+        </ion-header>
+
+        <ion-content>
+            <ion-list>
+                <ion-item
+                    button
+                    detail="false"
+                    *ngFor="let p of filteredProducts"
+                    (click)="toggleProductSelection(p)">
+                    <ion-avatar slot="start">
+                        <img [src]="getImageSrc(p)" alt="thumb" />
+                    </ion-avatar>
+
+                    <ion-label>
+                        <h2>{{ p.name }}</h2>
+                        <p>{{ p.purchasePrice | currency }}</p>
+                    </ion-label>
+
+                    <ion-checkbox
+                        slot="end"
+                        [checked]="isProductSelected(p?.id)"
+                        (ionChange)="$event.stopPropagation(); toggleProductSelection(p)">
+                    </ion-checkbox>
+                </ion-item>
+            </ion-list>
+        </ion-content>
+    </ng-template>
+</ion-modal>

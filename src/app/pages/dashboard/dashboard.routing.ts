@@ -46,4 +46,16 @@ export const dashboardRoutes: Routes = [
       import("./inventory/inventory.routing").then((m) => m.inventoryRoutes),
     data: { showTab: true },
   },
+  {
+    path: "supplier",
+    loadChildren: () =>
+      import("./supplier/supplier.routing").then((m) => m.suppliersRoutes),
+    data: { showTab: true },
+  },
+  {
+    path: "movements",
+    loadChildren: () =>
+      import("./movements/movements.routing").then((m) => m.movementsRoutes),
+    data: { showTab: true },
+  }
 ];
