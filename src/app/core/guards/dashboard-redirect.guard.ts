@@ -26,7 +26,8 @@ export class DashboardRedirectGuard implements CanActivate {
           return false;
       }
     }
-
+    // Si aún no hay company cargada, deja ver el DashboardComponent o
+    // podrías retornar false y esperar a un resolver, según tu diseño.
     return true;
   }
 }

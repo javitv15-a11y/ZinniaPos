@@ -1,3 +1,6 @@
+// ===============================================
+// src/app/pages/dashboard/products/components/product-detail/product-detail.component.ts
+// ===============================================
 import { CommonModule } from "@angular/common";
 import {
   Component,
@@ -16,13 +19,16 @@ import {
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import { Subscription, firstValueFrom } from "rxjs";
 import { FormsModule } from "@angular/forms";
+
 import {
   ProductService,
   ProductApi,
 } from "src/app/core/services/bussiness/product.service";
-
-// 👇 NUEVO: servicio para proveedores
 import { SupplierService } from "src/app/core/services/bussiness/supplier.service";
+import {
+  ProductCategoryService,
+  CategoriaApi,
+} from "src/app/core/services/bussiness/product-category.service";
 
 type Status = "Activo" | "Inactivo";
 
@@ -55,8 +61,8 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     private alertCtrl: AlertController,
     private actionSheet: ActionSheetController,
     private toastCtrl: ToastController,
-    // 👇 inyección del servicio de proveedores
-    private supplierSrv: SupplierService
+    private supplierSrv: SupplierService,
+    private categorySrv: ProductCategoryService // 👈 NUEVO
   ) {}
 
   @ViewChild("fileInput") fileInput!: ElementRef<HTMLInputElement>;
@@ -88,11 +94,8 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     impuesto: "",
   };
 
-  private readonly CATEGORIES_URL =
-    "https://codigofuentecorp.eastus.cloudapp.azure.com/zinnia-apis-php/public/categorias";
+  // caches
   private categoriesCache: Array<{ id: string; nombre: string }> | null = null;
-
-  // 👇 cache de proveedores para no pegarle mil veces a la API
   private suppliersCache: Array<{ id: string; nombre: string }> | null = null;
 
   ngOnInit(): void {
@@ -114,8 +117,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     if (v === null || v === undefined || v === "") return 0;
     if (typeof v === "number") return isFinite(v) ? v : 0;
     const s = String(v).trim();
-    const hasComma = s.includes(","),
-      hasDot = s.includes(".");
+    const hasComma = s.includes(","), hasDot = s.includes(".");
     let normalized = s;
     if (hasComma && hasDot) normalized = s.replace(/\./g, "").replace(",", ".");
     else if (hasComma) normalized = s.replace(",", ".");
@@ -124,29 +126,14 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   }
   private statusToText(v: any): Status {
     const k = String(v ?? "").toLowerCase();
-    if (
-      v === true ||
-      v === 1 ||
-      k === "1" ||
-      k === "true" ||
-      k.includes("activo") ||
-      k === "active"
-    )
+    if (v === true || v === 1 || k === "1" || k === "true" || k.includes("activo") || k === "active")
       return "Activo";
-    if (
-      v === false ||
-      v === 0 ||
-      k === "0" ||
-      k === "false" ||
-      k.includes("inactivo") ||
-      k === "inactive"
-    )
+    if (v === false || v === 0 || k === "0" || k === "false" || k.includes("inactivo") || k === "inactive")
       return "Inactivo";
     return "Activo";
   }
   private firstNonEmpty<T = any>(...vals: T[]): T | null {
-    for (const v of vals)
-      if (v !== undefined && v !== null && v !== "") return v;
+    for (const v of vals) if (v !== undefined && v !== null && v !== "") return v;
     return null;
   }
   private collectImages(p: any): string[] {
@@ -156,12 +143,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
         Array.isArray(p?.images) ? p.images : null,
         Array.isArray(p?.fotos) ? p.fotos : null
       ) || [];
-    const single = this.firstNonEmpty<string>(
-      p?.imagen,
-      p?.image,
-      p?.url_imagen,
-      p?.urlImagen
-    );
+    const single = this.firstNonEmpty<string>(p?.imagen, p?.image, p?.url_imagen, p?.urlImagen);
     const out: string[] = [];
     if (arr?.length) out.push(...arr.filter(Boolean));
     if (single) out.push(single);
@@ -170,73 +152,27 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
 
   private mapToUI(p: ProductApi): UIProductDetail {
     const anyP: any = p;
-    const name = this.firstNonEmpty(
-      anyP.nombre,
-      anyP.name,
-      anyP.titulo,
-      anyP.title,
-      "Producto"
-    ) as string;
-    const description = this.firstNonEmpty(
-      anyP.descripcion,
-      anyP.description,
-      anyP.detalle,
-      anyP.observaciones
-    ) as string | null;
-    const salePrice = this.toNumber(
-      this.firstNonEmpty(
-        anyP.precio_venta,
-        anyP.precioVenta,
-        anyP.precio,
-        anyP.price,
-        anyP.pvp,
-        0
-      )
-    );
-    const costPrice = this.toNumber(
-      this.firstNonEmpty(
-        anyP.precio_costo,
-        anyP.precioCosto,
-        anyP.costo,
-        anyP.cost,
-        0
-      )
-    );
-    const stockActual = this.toNumber(
-      this.firstNonEmpty(
-        anyP.stock_actual,
-        anyP.stock,
-        anyP.existencias,
-        anyP.cantidad,
-        0
-      )
-    );
-    const stockMin = this.toNumber(
-      this.firstNonEmpty(anyP.stock_minimo, anyP.stockMin, anyP.stock_min, 0)
-    );
+    const name = this.firstNonEmpty(anyP.nombre, anyP.name, anyP.titulo, anyP.title, "Producto") as string;
+    const description = this.firstNonEmpty(anyP.descripcion, anyP.description, anyP.detalle, anyP.observaciones) as string | null;
+    const salePrice = this.toNumber(this.firstNonEmpty(anyP.precio_venta, anyP.precioVenta, anyP.precio, anyP.price, anyP.pvp, 0));
+    const costPrice  = this.toNumber(this.firstNonEmpty(anyP.precio_costo, anyP.precioCosto, anyP.costo, anyP.cost, 0));
+    const stockActual = this.toNumber(this.firstNonEmpty(anyP.stock_actual, anyP.stock, anyP.existencias, anyP.cantidad, 0));
+    const stockMin    = this.toNumber(this.firstNonEmpty(anyP.stock_minimo, anyP.stockMin, anyP.stock_min, 0));
     const providerName = this.firstNonEmpty(
-      anyP.proveedor_nombre,
-      anyP.provider_name,
-      anyP.proveedor?.nombre,
-      anyP.proveedor?.name,
-      anyP.provider?.nombre,
-      anyP.provider?.name
+      anyP.proveedor_nombre, anyP.provider_name,
+      anyP.proveedor?.nombre, anyP.proveedor?.name,
+      anyP.provider?.nombre, anyP.provider?.name
     ) as string | null;
     const categoryName = this.firstNonEmpty(
-      anyP.categoria_nombre,
-      anyP.category_name,
-      anyP.categoria?.nombre,
-      anyP.categoria?.name,
-      anyP.category?.nombre,
-      anyP.category?.name
+      anyP.categoria_nombre, anyP.category_name,
+      anyP.categoria?.nombre, anyP.categoria?.name,
+      anyP.category?.nombre, anyP.category?.name
     ) as string | null;
 
     return {
       id: String(anyP.id ?? anyP._id ?? anyP.codigo ?? ""),
       name,
-      status: this.statusToText(
-        this.firstNonEmpty(anyP.estado, anyP.status, anyP.activo, true)
-      ),
+      status: this.statusToText(this.firstNonEmpty(anyP.estado, anyP.status, anyP.activo, true)),
       description,
       salePrice,
       costPrice,
@@ -267,16 +203,10 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       this.product = this.mapToUI(apiProduct);
       this.selectedIndex = 0;
 
-      const imgs = await this.productsSrv.getImages({
-        id: apiProduct.id,
-        idunico: apiProduct.idunico,
-      });
+      const imgs = await this.productsSrv.getImages({ id: apiProduct.id, idunico: apiProduct.idunico });
       if (imgs?.length) this.product.images = imgs;
       else {
-        const cover = await this.productsSrv.getCoverUrl({
-          id: apiProduct.id,
-          idunico: apiProduct.idunico,
-        });
+        const cover = await this.productsSrv.getCoverUrl({ id: apiProduct.id, idunico: apiProduct.idunico });
         if (cover) this.product.images = [cover];
       }
 
@@ -290,13 +220,14 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     }
   }
 
+  // ====== Categoría / Proveedor ======
   private async ensureCategoryName() {
     if (!this.product) return;
     if (this.product.categoryName) return;
     const catId = (this.apiProduct as any)?.categoria_id;
     if (!catId) return;
 
-    const categorias = await this.getCategoriesFromApi();
+    const categorias = await this.getCategoriesFromService();
     const match = categorias.find((c) => String(c.id) === String(catId));
     if (match) this.product.categoryName = match.nombre;
   }
@@ -310,21 +241,48 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
 
     const proveedores = await this.getSuppliersFromApi();
     const match = proveedores.find((p) => String(p.id) === String(provId));
-    if (match) {
-      this.product.providerName = match.nombre;
+    if (match) this.product.providerName = match.nombre;
+  }
+
+  private async getCategoriesFromService(): Promise<Array<{ id: string; nombre: string }>> {
+    if (this.categoriesCache) return this.categoriesCache;
+    try {
+      const arr = await this.categorySrv.getCategorias();
+      this.categoriesCache = (arr || []).map((c: CategoriaApi) => ({
+        id: String(c.id),
+        nombre: String(c.nombre || c.id),
+      })).sort((a, b) => a.nombre.localeCompare(b.nombre));
+      return this.categoriesCache;
+    } catch {
+      this.categoriesCache = [];
+      return [];
     }
   }
 
-  reload() {
-    if (this.product?.id) this.loadProduct(this.product.id);
+  private async getSuppliersFromApi(): Promise<Array<{ id: string; nombre: string }>> {
+    if (this.suppliersCache) return this.suppliersCache;
+    try {
+      const obs: any = (this.supplierSrv as any).getAllSuppliers
+        ? (this.supplierSrv as any).getAllSuppliers("")
+        : (this.supplierSrv as any).list?.();
+      const arr: any[] = await firstValueFrom(obs);
+      this.suppliersCache = (arr || []).map((raw: any) => {
+        const id = String(raw?.id ?? raw?.proveedor_id ?? raw?._id ?? "").trim();
+        const nombre = String(raw?.nombre ?? raw?.name ?? "").trim() || `Proveedor ${id}`;
+        return id ? { id, nombre } : null;
+      }).filter(Boolean) as Array<{ id: string; nombre: string }>;
+      this.suppliersCache.sort((a, b) => a.nombre.localeCompare(b.nombre));
+      return this.suppliersCache;
+    } catch {
+      this.suppliersCache = [];
+      return [];
+    }
   }
 
-  selectImage(i: number) {
-    this.selectedIndex = i;
-  }
-  triggerUpload() {
-    this.fileInput?.nativeElement?.click();
-  }
+  // ====== UI ======
+  reload() { if (this.product?.id) this.loadProduct(this.product.id); }
+  selectImage(i: number) { this.selectedIndex = i; }
+  triggerUpload() { this.fileInput?.nativeElement?.click(); }
 
   async handleUpload(ev: Event) {
     const file = (ev.target as HTMLInputElement).files?.[0];
@@ -335,22 +293,14 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       header: "Subir imagen",
       message: `<div style="display:flex;justify-content:center;"><img src="${blobUrl}" style="max-width:220px;border-radius:8px"/></div>¿Deseas subir esta imagen?`,
       buttons: [
-        {
-          text: "Cancelar",
-          role: "cancel",
-          handler: () => URL.revokeObjectURL(blobUrl),
-        },
+        { text: "Cancelar", role: "cancel", handler: () => URL.revokeObjectURL(blobUrl) },
         {
           text: "Subir",
           handler: async () => {
             try {
-              const target =
-                (this.apiProduct as any)?.idunico || this.product!.id;
+              const target = (this.apiProduct as any)?.idunico || this.product!.id;
               await this.productsSrv.uploadImages(target, [file]);
-              this.productsSrv.notifyProductChanged(
-                this.product!.id,
-                "image_uploaded"
-              );
+              this.productsSrv.notifyProductChanged(this.product!.id, "image_uploaded");
               await this.presentToast("Imagen subida");
               await this.loadProduct(this.product!.id);
             } catch {
@@ -372,11 +322,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       message: `<div style="display:flex;justify-content:center;"><img src="${imgUrl}" style="max-width:220px;border-radius:8px"/></div>¿Deseas eliminar esta imagen?`,
       buttons: [
         { text: "Cancelar", role: "cancel" },
-        {
-          text: "Eliminar",
-          role: "destructive",
-          handler: () => this.deleteImage(imgUrl),
-        },
+        { text: "Eliminar", role: "destructive", handler: () => this.deleteImage(imgUrl) },
       ],
     });
     await alert.present();
@@ -385,10 +331,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   private async deleteImage(imgUrl: string) {
     if (!this.product) return;
     try {
-      const ok = await this.productsSrv.deleteImage(
-        { idunico: this.apiProduct?.idunico, id: this.product.id },
-        imgUrl
-      );
+      const ok = await this.productsSrv.deleteImage({ idunico: this.apiProduct?.idunico, id: this.product.id }, imgUrl);
       await this.presentToast(ok ? "Imagen eliminada" : "No se pudo eliminar");
       if (ok) {
         this.productsSrv.notifyProductChanged(this.product.id, "image_deleted");
@@ -403,14 +346,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     if (!this.product) return;
     const alert = await this.alertCtrl.create({
       header: "Actualizar stock",
-      inputs: [
-        {
-          name: "stock",
-          type: "number",
-          value: String(this.product.stockActual),
-          placeholder: "Stock",
-        },
-      ],
+      inputs: [{ name: "stock", type: "number", value: String(this.product.stockActual), placeholder: "Stock" }],
       buttons: [
         { text: "Cancelar", role: "cancel" },
         {
@@ -419,11 +355,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
             const n = this.toNumber(data.stock);
             try {
               await this.productsSrv.updateStock(this.product!.id, n);
-              this.productsSrv.notifyProductChanged(
-                this.product!.id,
-                "stock_updated",
-                { stock: n }
-              );
+              this.productsSrv.notifyProductChanged(this.product!.id, "stock_updated", { stock: n });
               await this.presentToast("Stock actualizado");
               await this.loadProduct(this.product!.id);
             } catch (e: any) {
@@ -453,9 +385,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     this.editOpen = true;
   }
 
-  closeEdit() {
-    this.editOpen = false;
-  }
+  closeEdit() { this.editOpen = false; }
 
   async saveEdit() {
     if (!this.product || !this.apiProduct) return;
@@ -464,8 +394,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     const toMoneyStr = (v: any): string => {
       if (v === null || v === undefined || v === "") return "0.00";
       const s = String(v).trim();
-      const hasComma = s.includes(","),
-        hasDot = s.includes(".");
+      const hasComma = s.includes(","), hasDot = s.includes(".");
       let nStr = s;
       if (hasComma && hasDot) nStr = s.replace(/\./g, "").replace(",", ".");
       else if (hasComma) nStr = s.replace(",", ".");
@@ -478,10 +407,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       return isFinite(n) ? String(n) : "0";
     };
 
-    const imagenes = (this.product?.images ?? []).map((url) => ({
-      filename: this.filenameFromUrl(url),
-      url,
-    }));
+    const imagenes = (this.product?.images ?? []).map((url) => ({ filename: this.filenameFromUrl(url), url }));
     const portada = this.heroImage || this.product?.images?.[0] || "";
 
     const payload: Record<string, any> = {
@@ -492,15 +418,9 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       precio_costo: toMoneyStr(this.edit.precio_costo),
       precio_venta: toMoneyStr(this.edit.precio_venta),
       stock: toIntStr(this.edit.stock),
-      categoria_id: String(
-        this.edit.categoria_id ?? this.apiProduct!.categoria_id ?? ""
-      ),
-      proveedor_id: String(
-        this.edit.proveedor_id ?? this.apiProduct!.proveedor_id ?? ""
-      ),
-      impuesto: toMoneyStr(
-        this.edit.impuesto ?? this.apiProduct!.impuesto ?? 0
-      ),
+      categoria_id: String(this.edit.categoria_id ?? this.apiProduct!.categoria_id ?? ""),
+      proveedor_id: String(this.edit.proveedor_id ?? this.apiProduct!.proveedor_id ?? ""),
+      impuesto: toMoneyStr(this.edit.impuesto ?? this.apiProduct!.impuesto ?? 0),
       imagenes,
       imagen_portada_url: portada,
     };
@@ -517,87 +437,12 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       this.closeEdit();
       await this.loadProduct(id);
     } catch (e: any) {
-      await this.presentToast(
-        e?.message || "No se pudo actualizar el producto"
-      );
+      await this.presentToast(e?.message || "No se pudo actualizar el producto");
     }
-  }
-
-  private async getCategoriesFromApi(): Promise<
-    Array<{ id: string; nombre: string }>
-  > {
-    if (this.categoriesCache) return this.categoriesCache;
-    try {
-      const res = await fetch(this.CATEGORIES_URL, { method: "GET" });
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      const data = await res.json();
-      const list: Array<{ id: string; nombre: string }> = (
-        Array.isArray(data) ? data : []
-      )
-        .map((raw: any) => {
-          const id = String(
-            raw?.id ?? raw?.categoria_id ?? raw?._id ?? raw?.codigo ?? ""
-          );
-          const nombre =
-            String(
-              raw?.nombre ?? raw?.name ?? raw?.titulo ?? raw?.title ?? ""
-            ).trim() || "Sin nombre";
-          return { id, nombre };
-        })
-        .filter((x) => x.id !== "");
-      list.sort((a, b) => a.nombre.localeCompare(b.nombre));
-      this.categoriesCache = list;
-      return list;
-    } catch {
-      await this.presentToast("No se pudieron cargar categorías");
-      return [];
-    }
-  }
-
-  // 👇 NUEVO: proveedores desde la API (vía SupplierService)
-  private async getSuppliersFromApi(): Promise<
-    Array<{ id: string; nombre: string }>
-  > {
-    if (this.suppliersCache) return this.suppliersCache;
-    try {
-      // Soporta implementación con o sin parámetro userId
-      const obs: any = (this.supplierSrv as any).getAllSuppliers
-        ? (this.supplierSrv as any).getAllSuppliers("") // el backend ignora userId
-        : (this.supplierSrv as any).list?.();
-
-      const arr: any[] = await firstValueFrom(obs);
-      const list = (arr || [])
-        .map((raw: any) => {
-          const id = String(
-            raw?.id ?? raw?.proveedor_id ?? raw?._id ?? ""
-          ).trim();
-          const nombre =
-            String(raw?.nombre ?? raw?.name ?? "").trim() || `Proveedor ${id}`;
-          return id ? { id, nombre } : null;
-        })
-        .filter(Boolean) as Array<{ id: string; nombre: string }>;
-      list.sort((a, b) => a.nombre.localeCompare(b.nombre));
-      this.suppliersCache = list;
-      return list;
-    } catch (e) {
-      await this.presentToast("No se pudieron cargar proveedores");
-      return [];
-    }
-  }
-
-  setAsCover() {
-    if (!this.product || !this.product.images?.length) return;
-    const i = this.selectedIndex;
-    if (i <= 0) return;
-    const imgs = [...this.product.images];
-    const [picked] = imgs.splice(i, 1);
-    imgs.unshift(picked);
-    this.product.images = imgs;
-    this.selectedIndex = 0;
   }
 
   async chooseCategory() {
-    const opciones = await this.getCategoriesFromApi();
+    const opciones = await this.getCategoriesFromService();
     const buttons: ActionSheetButton[] = opciones.map((o) => ({
       text: o.nombre,
       handler: () => {
@@ -606,14 +451,10 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       },
     }));
     buttons.push({ text: "Cancelar", role: "cancel" });
-    const sheet = await this.actionSheet.create({
-      header: "Seleccionar categoría",
-      buttons,
-    });
+    const sheet = await this.actionSheet.create({ header: "Seleccionar categoría", buttons });
     await sheet.present();
   }
 
-  // 👇 ACTUALIZADO: consume proveedores reales
   async chooseProvider() {
     const opciones = await this.getSuppliersFromApi();
     if (!opciones.length) {
@@ -628,51 +469,31 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       },
     }));
     buttons.push({ text: "Cancelar", role: "cancel" });
-    const sheet = await this.actionSheet.create({
-      header: "Seleccionar proveedor",
-      buttons,
-    });
+    const sheet = await this.actionSheet.create({ header: "Seleccionar proveedor", buttons });
     await sheet.present();
   }
 
   private filenameFromUrl(url: string): string {
-    try {
-      return String(url).split("?")[0].split("/").pop() || String(url);
-    } catch {
-      return String(url);
-    }
+    try { return String(url).split("?")[0].split("/").pop() || String(url); }
+    catch { return String(url); }
   }
 
   async openMore() {
     const sheet = await this.actionSheet.create({
       header: "Acciones",
       buttons: [
-        {
-          text: "Editar",
-          icon: "create-outline",
-          handler: () => this.openEdit(),
-        },
-        {
-          text: "Compartir",
-          icon: "share-social-outline",
-          handler: () => this.share(),
-        },
+        { text: "Editar", icon: "create-outline", handler: () => this.openEdit() },
+        { text: "Compartir", icon: "share-social-outline", handler: () => this.share() },
         { text: "Cancelar", role: "cancel" },
       ],
     });
     await sheet.present();
   }
 
-  async share() {
-    await this.presentToast("Compartido (demo)");
-  }
+  async share() { await this.presentToast("Compartido (demo)"); }
 
   private async presentToast(message: string) {
-    const t = await this.toastCtrl.create({
-      message,
-      duration: 1600,
-      position: "bottom",
-    });
+    const t = await this.toastCtrl.create({ message, duration: 1600, position: "bottom" });
     await t.present();
   }
 }

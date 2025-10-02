@@ -1,0 +1,27 @@
+<ion-header translucent="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button fill="clear" (click)="cancel()">
+        <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>Fecha</ion-title>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" (click)="confirm()">
+        <ion-icon slot="icon-only" name="checkmark-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-datetime
+    presentation="date"
+    [value]="selected"
+    [min]="min ?? undefined"
+    [locale]="locale"
+    firstDayOfWeek="1"
+    [showDefaultButtons]="false"
+    (ionChange)="onChange($event.detail.value)">
+  </ion-datetime>
+</ion-content>

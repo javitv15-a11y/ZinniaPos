@@ -13,6 +13,10 @@ import {
   ProductApi,
 } from "src/app/core/services/bussiness/product.service";
 import { ProductAddComponent } from "../product-add/product-add.component";
+import {
+  ProductCategoryService,
+  CategoriaApi,
+} from "src/app/core/services/bussiness/product-category.service";
 
 type Status = "Activo" | "Inactivo";
 type StatusKey = "activo" | "inactivo";
@@ -46,7 +50,8 @@ export class ProductManagementComponent implements OnInit, OnDestroy {
   constructor(
     private productsSrv: ProductService,
     private modalCtrl: ModalController,
-    private router: Router
+    private router: Router,
+    private categorySrv: ProductCategoryService // 👈 nuevo
   ) {}
 
   // Estado UI
@@ -60,10 +65,10 @@ export class ProductManagementComponent implements OnInit, OnDestroy {
   products: UIProduct[] = [];
   filtered: UIProduct[] = [];
 
-  // Catálogo de categorías (si viene sin nombre, intento inferirlo)
+  // Catálogo de categorías
   categoryOptions: { id: CategoriaId; name: CategoriaNombre }[] = [];
 
-  // Filtro (igual a Pedidos: pill + chips + modal por páginas)
+  // Filtro (igual a Pedidos)
   filters = {
     estados: new JSSet<StatusKey>(),   // múltiple
     categoria: "todas" as "todas" | CategoriaId, // única
@@ -149,7 +154,7 @@ export class ProductManagementComponent implements OnInit, OnDestroy {
       stock: stockNum,
       status: finalStatus,
       image: null,
-      categoryId: p.categoria_id,
+      categoryId: (p as any).categoria_id,
       categoryName:
         (p as any).categoria_nombre ??
         (p as any).categoria?.nombre ??
@@ -157,9 +162,22 @@ export class ProductManagementComponent implements OnInit, OnDestroy {
     };
   };
 
-  /** Construye catálogo de categorías con NOMBRE siempre que sea posible */
+  /** Catálogo de categorías con nombre desde ProductCategoryService */
   private async hydrateCategoryOptions(apiList: ProductApi[]) {
-    // 1) Desde el listado si vienen nombres
+    try {
+      const cats = await this.categorySrv.getCategorias();
+      if (cats?.length) {
+        this.categoryOptions = cats.map((c: CategoriaApi) => ({
+          id: String(c.id),
+          name: String(c.nombre || c.id),
+        }));
+        return;
+      }
+    } catch {
+      // seguimos con fallbacks
+    }
+
+    // Fallback 1: si el listado ya trae nombres
     const seen: Record<string, string> = {};
     for (const p of apiList as any[]) {
       const id = p?.categoria_id as string | undefined;
@@ -167,25 +185,9 @@ export class ProductManagementComponent implements OnInit, OnDestroy {
       if (id && name && !seen[id]) seen[id] = String(name);
     }
     const fromList = Object.entries(seen).map(([id, name]) => ({ id, name }));
-    if (fromList.length) {
-      this.categoryOptions = fromList;
-      return;
-    }
+    if (fromList.length) { this.categoryOptions = fromList; return; }
 
-    // 2) Intentar servicio getCategories(), si existe
-    const anySrv: any = this.productsSrv as any;
-    if (typeof anySrv.getCategories === "function") {
-      try {
-        const cats = await anySrv.getCategories();
-        this.categoryOptions = (cats || []).map((c: any) => ({
-          id: String(c.id ?? c._id ?? c.uuid),
-          name: String(c.nombre ?? c.name ?? c.title ?? c.label ?? c.id),
-        }));
-        return;
-      } catch { /* ignore */ }
-    }
-
-    // 3) Último recurso: IDs deduplicadas (sin Set, para evitar problemas)
+    // Fallback 2: IDs deduplicadas
     const ids: string[] = [];
     for (const p of apiList as any[]) {
       const id = p?.categoria_id as string | undefined;
@@ -207,10 +209,7 @@ export class ProductManagementComponent implements OnInit, OnDestroy {
       let url: string | null = null;
       try {
         if ((api as any)?.idunico) {
-          url = await this.productsSrv.getCoverUrl({
-            id: row.id,
-            idunico: (api as any).idunico,
-          });
+          url = await this.productsSrv.getCoverUrl({ id: row.id, idunico: (api as any).idunico });
         } else {
           url = await this.productsSrv.getCoverUrl(row.id);
         }
@@ -241,13 +240,23 @@ export class ProductManagementComponent implements OnInit, OnDestroy {
   private runFilters() {
     let arr = [...this.products];
 
+    // Mapa id->name para apoyar la búsqueda por categoría
+    const catNameById = new Map(this.categoryOptions.map(c => [c.id, this.normalize(c.name)]));
+
     // Búsqueda
     const q = this.normalize(this.query);
     if (q) {
       arr = arr.filter((p) => {
         const name = this.normalize(p.name);
-        const cat = this.normalize(p.categoryName ?? p.categoryId);
-        return name.includes(q) || cat.includes(q);
+        const catUiName = this.normalize(p.categoryName ?? "");
+        const catId = this.normalize(p.categoryId ?? "");
+        const catFromOptions = catNameById.get(p.categoryId ?? "") ?? "";
+        return (
+          name.includes(q) ||
+          catUiName.includes(q) ||
+          catFromOptions.includes(q) ||
+          catId.includes(q)
+        );
       });
     }
 
@@ -264,7 +273,7 @@ export class ProductManagementComponent implements OnInit, OnDestroy {
     this.filtered = arr;
   }
 
-  // ===================== Chips y modal (igual que Pedidos) =====================
+  // ===================== Chips y modal =====================
   get categoriaSummary(): string {
     if (this.filters.categoria === "todas") return "";
     const hit = this.categoryOptions.find((c) => c.id === this.filters.categoria);
@@ -278,11 +287,8 @@ export class ProductManagementComponent implements OnInit, OnDestroy {
   }
 
   removeFilterChip(kind: "estado" | "categoria", value?: StatusKey) {
-    if (kind === "estado" && value) {
-      this.filters.estados.delete(value);
-    } else if (kind === "categoria") {
-      this.filters.categoria = "todas";
-    }
+    if (kind === "estado" && value) this.filters.estados.delete(value);
+    else if (kind === "categoria") this.filters.categoria = "todas";
     this.runFilters();
   }
 

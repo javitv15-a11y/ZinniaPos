@@ -1,6 +1,6 @@
 import {ChangeDetectorRef, Component, OnInit, ViewChild} from '@angular/core';
 import {CommonModule} from '@angular/common';
-import {IonicModule} from '@ionic/angular';
+import {IonicModule, NavController } from '@ionic/angular';
 import {BusinessAccountInfoComponent} from "./components/business-account-info/business-account-info.component";
 import {BusinessTypeComponent} from "./components/business-type/business-type.component";
 import {UserAccountInfoComponent} from "./components/user-account-info/user-account-info.component";
@@ -41,6 +41,7 @@ export class RegisterComponent implements OnInit {
     constructor(
         private _router: Router,
         private _cdr: ChangeDetectorRef,
+        private navCtrl: NavController,
         private authService: AuthService,
         private _alertService: AlertService,
         private _loadingService: LoadingService,
@@ -50,7 +51,7 @@ export class RegisterComponent implements OnInit {
     ngOnInit() { }
     
     public prevStep() {
-        this.currentStep -= 1;
+        this.navCtrl.back();
     }
 
     public nextStep() {

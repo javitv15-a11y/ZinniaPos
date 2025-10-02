@@ -8,4 +8,6 @@ export interface IUser {
     estado: string | number;
     mostrar: string;
     token: string;
+    password: string;
+    
 }

@@ -5,25 +5,78 @@
     </div>
   </ion-toolbar>
 </ion-header>
+
 <ion-content>
   <div class="container">
     <div class="texts">
       <h1 class="title bold">Inicia sesión en Zinnia</h1>
       <ion-label class="subtitle ion-text-wrap">
-        Bienvenido de nuevo. Ingresa tus credenciales para continuar gestionando tu negocio con facilidad.
+        Bienvenido de nuevo. Ingresa tus credenciales para continuar gestionando
+        tu negocio con facilidad.
       </ion-label>
     </div>
+
     <form class="form" [formGroup]="loginForm" *ngIf="loginForm">
       <div class="row">
+        <!-- Email -->
         <div class="group">
           <label for="username">Correo electronico</label>
-          <ion-input placeholder="Correo" type="email" [clearInput]="true" fill="outline" mode="md" formControlName="email"></ion-input>
+          <ion-input
+            placeholder="Correo"
+            type="email"
+            [clearInput]="true"
+            fill="outline"
+            mode="md"
+            formControlName="email">
+          </ion-input>
+
+          <!-- Validación frontend -->
+          <ion-text color="danger"
+            *ngIf="email?.touched && email?.errors?.['required']">
+            El correo es obligatorio.
+          </ion-text>
+          <ion-text color="danger"
+            *ngIf="email?.touched && email?.errors?.['email']">
+            Ingresa un correo válido.
+          </ion-text>
+          <!-- Error backend específico -->
+          <ion-text color="danger" *ngIf="serverEmailError">{{ serverEmailError
+            }}</ion-text>
         </div>
+
+   
+        <!-- Password -->
         <div class="group">
           <label for="password">Contraseña</label>
-          <ion-input appPasswordInput placeholder="Contraseña" formControlName="password"></ion-input>
+          <ion-input
+            appPasswordInput
+            placeholder="Contraseña"
+            type="password"
+            formControlName="password"
+            (keyup.enter)="login()">
+          </ion-input>
+
+          <!-- Validaciones frontend -->
+          <ion-text color="danger"
+            *ngIf="password?.touched && password?.errors?.['required']">
+            La contraseña es obligatoria.
+          </ion-text>
+          <ion-text color="danger"
+            *ngIf="password?.touched && password?.errors?.['minlength']">
+            Debe tener al menos 8 caracteres.
+          </ion-text>
+          <ion-text color="danger"
+            *ngIf="password?.touched && password?.errors?.['pattern']">
+            Debe incluir mayúscula, minúscula, número y símbolo.
+          </ion-text>
+
+          <!-- Error backend específico -->
+          <ion-text color="danger" *ngIf="serverPasswordError">{{
+            serverPasswordError }}</ion-text>
         </div>
+
       </div>
+
       <div class="remember-forgot">
         <ion-checkbox mode="md" labelPlacement="end">Recuérdame</ion-checkbox>
       </div>
@@ -41,11 +94,16 @@
 
 <ion-footer mode="md" class="ion-no-border">
   <ion-toolbar class="ion-text-center">
-    <ion-button expand="block" fill="solid" (click)="login()">
-      Iniciar Sesión
+    <ion-button
+      expand="block"
+      fill="solid"
+      (click)="login()"
+      [disabled]="loginForm?.invalid || isSubmitting">
+      {{ isSubmitting ? 'Ingresando…' : 'Iniciar Sesión' }}
     </ion-button>
     <span>
-      ¿Aun no eres parte de Zinnia? <ion-text class="links" [routerLink]="['/register']">
+      ¿Aun no eres parte de Zinnia? <ion-text class="links"
+        [routerLink]="['/register']">
         Comenzar ahora
       </ion-text>
     </span>

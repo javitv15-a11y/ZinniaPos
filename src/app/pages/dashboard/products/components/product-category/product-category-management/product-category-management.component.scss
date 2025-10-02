@@ -1,0 +1,129 @@
+/* src/app/pages/dashboard/products/components/product-category-management/product-category-management.component.scss */
+.search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px 6px;
+}
+ion-searchbar.search {
+  flex: 1 1 auto;
+  --icon-color: #6b7280;
+  --placeholder-color: #6b7280;
+}
+ion-searchbar.search::part(container) {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12) inset, 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+ion-searchbar.search::part(input) {
+  min-height: 44px;
+  font-size: 14px;
+  padding-right: 16px;
+}
+
+.row-title {
+  margin: 0 0 2px;
+  font-weight: 700;
+}
+.row-sub {
+  margin: 0;
+  color: #6b7280;
+}
+.row-meta {
+  margin: 6px 0 0;
+  color: #6b7280;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.meta-strong {
+  font-weight: 600;
+}
+.dot {
+  margin: 0 4px;
+}
+
+.empty {
+  text-align: center;
+  padding: 24px;
+}
+.hero-img {
+  width: 72%;
+  max-width: 280px;
+  margin: 16px auto;
+  display: block;
+}
+/* ...lo que ya tenías... */
+
+.form-wrap {
+  padding: 8px 12px 16px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 8px 20px;
+}
+.subbar {
+  --background: var(--ion-color-step-50, #f7f7f7);
+  --color: var(--ion-color-medium);
+}
+
+.form-wrap {
+  padding: 12px 12px 24px;
+}
+
+.tax-row {
+  --inner-padding-end: 0;
+}
+
+.tax-input {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  padding: 2px 8px;
+
+  ion-input {
+    width: 88px;
+    text-align: right;
+  }
+  .suffix {
+    font-size: 13px;
+    color: var(--ion-color-medium);
+  }
+}
+
+.range-wrap {
+  padding: 6px 16px 0;
+  ion-note {
+    display: block;
+    padding-top: 6px;
+  }
+}
+
+.hints {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ion-color-medium);
+  padding: 8px 16px 18px;
+}
+
+ion-item ion-icon[slot="start"] {
+  margin-right: 8px;
+  color: var(--ion-color-medium);
+}
+.footer-actions {
+  display: flex;
+  gap: 12px;
+  padding: 8px 12px;
+}
+
+.footer-actions ion-button {
+  flex: 1 1 auto; /* los dos botones ocupan mismo ancho */
+}

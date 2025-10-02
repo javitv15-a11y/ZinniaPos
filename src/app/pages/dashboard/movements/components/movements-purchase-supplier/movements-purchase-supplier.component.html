@@ -196,14 +196,15 @@
             Agrega un producto para calcular el total y ver las formas de pago
         </div>
     </div>
-</ion-content>
+    <ion-footer class="ion-no-border footer">
+        <ion-button mode="md" expand="block" fill="solid"
+            [disabled]="isInvalid()"
+            (click)="confirmEntry()">
+            Confirmar
+        </ion-button>
+    </ion-footer>
 
-<ion-footer class="ion-no-border footer">
-    <ion-button mode="md" expand="block" fill="solid" [disabled]="isInvalid()"
-        (click)="confirmEntry()">
-        Confirmar
-    </ion-button>
-</ion-footer>
+</ion-content>
 
 <!-- ========= MODAL PROVEEDOR ========= -->
 <ion-modal

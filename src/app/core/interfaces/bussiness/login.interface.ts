@@ -1,4 +1,4 @@
-import { ICompany } from "./company.interface";
+
 import { IUser } from "./user.interface";
 
 export interface ILoginRequest {

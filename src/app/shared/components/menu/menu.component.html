@@ -1,4 +1,5 @@
-<ion-menu menuId="first-menu" contentId="main-content" class="menu" >
+<!-- menu.component.html -->
+<ion-menu [menuId]="'first-menu'" [contentId]="contentId || 'main-content'" class="menu">
   <ion-header class="ion-no-border">
     <ion-toolbar>
       <ion-buttons slot="start">
@@ -10,28 +11,47 @@
       </ion-buttons>
     </ion-toolbar>
   </ion-header>
+
   <ion-content class="ion-padding menu-content">
     <div class="profile">
       <ion-avatar class="avatar">
         <img alt="profile" src="assets/images/ic_energy.png" />
       </ion-avatar>
       <h5 class="user-name">{{ user?.fullname || 'Name not available' }}</h5>
-      <h6 class="user-email">{{ user?.email || 'Email not available' }} </h6>
+      <h6 class="user-email">{{ user?.email || 'Email not available' }}</h6>
     </div>
 
     <ion-list class="menu-items ion-margin-top">
       <ion-menu-toggle>
-        <ion-item [detail]="false" [button]="true" lines="none" color="light" class="item" *ngFor="let item of menuItemsItems"
-          (click)="gotTo(item)">
-          <ion-icon aria-hidden="true" [name]="item.icon" [color]="item.isArrow ? '' : 'danger'" size="small"
-            slot="start" class="item__icon"></ion-icon>
-          <ion-label class="item__label" [color]="item.isArrow ? '' : 'danger'">{{ item.text }}</ion-label>
+        <ion-item
+          [detail]="false"
+          [button]="true"
+          lines="none"
+          color="light"
+          class="item"
+          *ngFor="let item of menuItemsItems"
+          (click)="gotTo(item)"
+        >
+          <ion-icon
+            aria-hidden="true"
+            [name]="item.icon"
+            [color]="item.isArrow ? '' : 'danger'"
+            size="small"
+            slot="start"
+            class="item__icon">
+          </ion-icon>
+
+          <ion-label class="item__label" [color]="item.isArrow ? '' : 'danger'">
+            {{ item.text }}
+          </ion-label>
+
           <ion-icon slot="end" name="chevron-forward" size="small" *ngIf="item.isArrow"></ion-icon>
         </ion-item>
       </ion-menu-toggle>
     </ion-list>
   </ion-content>
+
   <ion-footer mode="md" class="app-version ion-no-border ion-padding-end ion-margin-end ion-text-end">
-    <ion-label mode="md">V 1.0.0 </ion-label>
+    <ion-label mode="md">V {{ appVersion || '1.0.0' }}</ion-label>
   </ion-footer>
 </ion-menu>

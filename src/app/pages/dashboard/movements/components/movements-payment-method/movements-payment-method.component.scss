@@ -8,7 +8,7 @@
 
 .pm-content {
   --background: var(--surface);
-  padding: 12px 12px 96px; // espacio para footer fijo
+  padding: 12px 12px 96px;
 }
 
 .card {
@@ -29,11 +29,7 @@
   border-radius: 12px;
   margin: 10px 0;
 
-  &.disabled {
-    opacity: .55;
-    pointer-events: none;
-  }
-
+  &.disabled { opacity: .55; pointer-events: none; }
   .label { color: var(--muted); font-size: 13px; }
 
   ion-select,
@@ -45,7 +41,6 @@
   }
 }
 
-/* Resumen */
 .row {
   display: flex;
   justify-content: space-between;
@@ -53,7 +48,7 @@
   padding: 6px 2px;
   font-size: 14px;
   .left { color: #111827; }
-  .right { color: #111827; }
+  .right { color: #111827; text-align: right; }
 }
 .row.head { padding-bottom: 10px; font-weight: 700; }
 .row.total { margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--border); font-weight: 800; }
@@ -63,7 +58,12 @@
 .pm-footer {
   position: fixed;
   left: 0; right: 0; bottom: 0;
-
   ion-toolbar { --background: transparent; padding: 0 12px 12px; }
   ion-button { height: 48px; border-radius: 14px; font-weight: 700; }
 }
+
+ion-modal::part(content) {
+  --height: 100%;
+  --border-radius: 0;
+}
+

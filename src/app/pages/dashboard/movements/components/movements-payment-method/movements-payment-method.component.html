@@ -22,8 +22,8 @@
       <ion-item class="field" lines="none" detail="true">
         <ion-label class="label">Tipo de pago</ion-label>
         <ion-select slot="end" interface="action-sheet"
-                    formControlName="paymentType"
-                    (ionChange)="onRecalc()">
+          formControlName="paymentType"
+          (ionChange)="onPaymentTypeChange()">
           <ion-select-option value="contado">Pago de contado</ion-select-option>
           <ion-select-option value="credito">Pago a crédito</ion-select-option>
         </ion-select>
@@ -31,67 +31,72 @@
 
       <ion-item class="field" lines="none" [class.disabled]="isContado">
         <ion-label class="label">Número de cuotas</ion-label>
-        <ion-input slot="end" type="number" inputmode="numeric" min="1"
-                   placeholder="1"
-                   [disabled]="isContado"
-                   formControlName="installments"
-                   (ionInput)="onRecalc()">
+        <ion-input slot="end"
+          type="number"
+          inputmode="numeric"
+          min="1"
+          placeholder="1"
+          [disabled]="isContado"
+          formControlName="installments"
+          (ionInput)="onInstallmentsInput($event)">
         </ion-input>
       </ion-item>
 
-      <ion-item class="field" lines="none" [class.disabled]="isContado" detail="true">
+      
+      <ion-item class="field" lines="none" [class.disabled]="isContado"
+        detail="true">
         <ion-label class="label">Frecuencia de pago</ion-label>
-        <ion-select slot="end" interface="action-sheet"
-                    [disabled]="isContado"
-                    formControlName="frequency"
-                    (ionChange)="onRecalc()">
+        <ion-select slot="end"
+          interface="action-sheet"
+          [disabled]="isContado"
+          formControlName="frequency"
+          (ionChange)="onFrequencyChange()">
           <ion-select-option value="semanal">Semanal</ion-select-option>
           <ion-select-option value="quincenal">Quincenal</ion-select-option>
           <ion-select-option value="mensual">Mensual</ion-select-option>
         </ion-select>
       </ion-item>
 
-      <ion-item class="field" lines="none" [class.disabled]="isContado" detail="true">
+      
+      <ion-item class="field" lines="none" [class.disabled]="isContado"
+        detail="true" button (click)="openStartDateModal()">
         <ion-label class="label">Fecha de inicio de pago</ion-label>
-        <ion-datetime-button slot="end" datetime="startDatePicker" [disabled]="isContado"></ion-datetime-button>
-        <ion-modal [keepContentsMounted]="true">
-          <ng-template>
-            <ion-datetime id="startDatePicker"
-                          presentation="date"
-                          locale="es-ES"
-                          [preferWheel]="true"
-                          formControlName="startDate"
-                          (ionChange)="onRecalc()">
-            </ion-datetime>
-          </ng-template>
-        </ion-modal>
+        <div slot="end" class="value">
+          {{ startDateLabel }}
+        </div>
       </ion-item>
     </div>
 
     <div class="card" *ngIf="summaryRows.length">
       <div class="row head">
-        <div class="left">{{ form.value.installments }} cuotas</div>
-        <div class="right">{{ perInstallment | currency:currencyCode:'symbol':'1.2-2' }} c/u</div>
+        <div class="left">{{ labelCuotas(form.get('installments')?.value || 1)
+          }}</div>
+        <div class="right">{{ perInstallment |
+          currency:currencyCode:'symbol':'1.2-2' }} c/u</div>
       </div>
 
-      <div class="row" *ngFor="let d of summaryRows; let i = index">
+      <div class="row"
+        *ngFor="let d of summaryRows; let i = index; trackBy: trackByIndex">
         <div class="left">Cuota {{ i + 1 }}:</div>
-        <div class="right">{{ d | date:"d 'de' MMM, y":'':'es' }}</div>
+        <div class="right">{{ summaryLabels[i] }}</div>
       </div>
 
       <div class="row total">
         <div class="left">Total compra</div>
-        <div class="right">{{ totalAmount | currency:currencyCode:'symbol':'1.2-2' }}</div>
+        <div class="right">{{ totalAmount |
+          currency:currencyCode:'symbol':'1.2-2' }}</div>
       </div>
     </div>
 
     <div class="footer-padder"></div>
     <ion-footer class="pm-footer">
       <ion-toolbar>
-        <ion-button expand="block" size="large" [disabled]="!form.valid" type="submit">
+        <ion-button expand="block" size="large" [disabled]="!form.valid"
+          type="submit">
           Guardar
         </ion-button>
       </ion-toolbar>
     </ion-footer>
-  </form>
+  </form> 
+  
 </ion-content>

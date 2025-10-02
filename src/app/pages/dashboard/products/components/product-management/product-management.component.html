@@ -125,9 +125,10 @@ src/app/pages/dashboard/products/components/product-management/product-managemen
 
   <!-- ============ SHEET INFERIOR "FILTRAR POR" (igual a Pedidos) ============ -->
   <ion-modal
+    cssClass="filters-sheet"
     [isOpen]="isFiltersModalOpen"
     (didDismiss)="closeFilters()"
-    breakpoints="[0, 0.5, 0.9]"
+    [breakpoints]="[0, 0.5, 0.9]"
     initialBreakpoint="0.5">
     <ng-template>
       <ion-header>
@@ -160,7 +161,6 @@ src/app/pages/dashboard/products/components/product-management/product-managemen
               </ion-button>
             </ng-template>
           </ion-buttons>
-
         </ion-toolbar>
       </ion-header>
 
@@ -211,9 +211,10 @@ src/app/pages/dashboard/products/components/product-management/product-managemen
 
         <!-- Página CATEGORÍA (única) -->
         <ng-container *ngIf="filtersPage==='categoria'">
-          <ion-list lines="full">
+          <ion-list lines="full" class="category-scroll">
             <ion-list-header>Categoría</ion-list-header>
-            <ion-radio-group [value]="filters.categoria"
+            <ion-radio-group
+              [value]="filters.categoria"
               (ionChange)="onCategoriaChange($event.detail.value)">
               <ion-item>
                 <ion-label>Todas</ion-label>

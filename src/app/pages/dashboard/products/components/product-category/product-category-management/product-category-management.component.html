@@ -1,0 +1,238 @@
+<!-- src/app/pages/dashboard/products/components/product-category-management/product-category-management.component.html -->
+<ion-header translucent="true">
+  <ion-toolbar>
+    <ion-title class="title">Categorías de productos</ion-title>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" aria-label="Añadir" (click)="onAdd()">
+        <ion-icon slot="icon-only" name="add-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content fullscreen="true">
+  <ion-refresher slot="fixed" (ionRefresh)="load($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- Buscador -->
+  <div class="search-wrap">
+    <ion-searchbar
+      class="search"
+      [(ngModel)]="query"
+      placeholder="Buscar categoría"
+      show-clear-button="never"
+      (ionInput)="applyFilter()">
+    </ion-searchbar>
+  </div>
+
+  <!-- Loading skeleton -->
+  <ng-container *ngIf="loading; else loaded">
+    <ion-list>
+      <ion-item *ngFor="let i of [1,2,3,4,5,6]">
+        <ion-label>
+          <h3><ion-skeleton-text animated
+              style="width: 60%"></ion-skeleton-text></h3>
+          <p><ion-skeleton-text animated
+              style="width: 40%"></ion-skeleton-text></p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+  </ng-container>
+
+  <!-- Contenido cargado -->
+  <ng-template #loaded>
+    <!-- Error -->
+    <ion-card *ngIf="error">
+      <ion-card-header>
+        <ion-card-title>Error</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        {{ error }}
+        <ion-button expand="block" fill="outline"
+          (click)="load()">Reintentar</ion-button>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Lista -->
+    <ng-container *ngIf="!error">
+      <ion-list *ngIf="filtered.length; else empty">
+        <ion-item *ngFor="let c of filtered; trackBy: trackById" button
+          detail="false">
+          <ion-label>
+            <h3 class="row-title">{{ c.nombre || '—' }}</h3>
+
+            <p class="row-sub" *ngIf="c.descripcion">
+              {{ c.descripcion }}
+            </p>
+
+            <p class="row-meta">
+              <span class="meta-strong">Impuesto: {{ c.impuesto | number:'1.0-2'
+                }}%</span>
+              <span class="dot">•</span>
+              <ng-container *ngIf="c.fechaRegistroDate; else noDate">
+                <span>Creada: {{ c.fechaRegistroDate | date:"d 'de' MMM, y"
+                  }}</span>
+              </ng-container>
+              <ng-template #noDate>
+                <span>Fecha no disponible</span>
+              </ng-template>
+            </p>
+          </ion-label>
+
+          <ion-buttons slot="end">
+            <ion-button fill="clear" (click)="onEdit(c)" aria-label="Editar">
+              <ion-icon slot="icon-only" name="create-outline"></ion-icon>
+            </ion-button>
+            <ion-button fill="clear" color="danger" (click)="onDelete(c)"
+              aria-label="Eliminar">
+              <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-item>
+      </ion-list>
+
+      <!-- Vacío -->
+      <ng-template #empty>
+        <div class="empty">
+          <img class="hero-img" src="assets/images/categories.png"
+            alt="Categorías" />
+          <h2>Sin categorías</h2>
+          <p>No se recibieron datos del servidor.</p>
+          <ion-button expand="block" (click)="load()">Actualizar</ion-button>
+        </div>
+      </ng-template>
+    </ng-container>
+  </ng-template>
+</ion-content>
+
+<!-- ========= MODAL EMBEBIDO ========= -->
+<ion-modal [isOpen]="modalOpen" (didDismiss)="closeModal()"
+  cssClass="option-select-modal">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>
+          {{ modalMode === 'edit' ? 'Editar categoría' : 'Nueva categoría' }}
+        </ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="closeModal()" [disabled]="saving"
+            aria-label="Cerrar">
+            <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+
+      <ion-toolbar class="subbar">
+        <ion-title size="small">
+          {{ modalMode === 'edit' ? 'Actualiza los datos de la categoría' :
+          'Completa los datos para crearla' }}
+        </ion-title>
+        <ion-buttons slot="end" *ngIf="modalMode === 'edit' && editing">
+          <ion-chip color="medium">
+            <ion-icon name="pricetag-outline"></ion-icon>
+            <ion-label>ID: {{ getId(editing) }}</ion-label>
+          </ion-chip>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content [fullscreen]="true">
+      <form [formGroup]="form" (ngSubmit)="submitModal()" class="form-wrap">
+
+        <ion-list lines="inset">
+          <ion-item>
+            <ion-icon name="bookmark-outline" slot="start"></ion-icon>
+            <ion-label position="stacked">
+              Nombre <ion-text color="danger">*</ion-text>
+            </ion-label>
+            <ion-input
+              formControlName="nombre"
+              type="text"
+              placeholder="Ej: Electrónica"
+              maxlength="80"
+              [counter]="true">
+            </ion-input>
+            <ion-note slot="helper">Máx. 80 caracteres.</ion-note>
+            <ion-note
+              *ngIf="form.controls['nombre'].touched && form.controls['nombre'].invalid"
+              color="danger">
+              El nombre es obligatorio.
+            </ion-note>
+          </ion-item>
+
+          <ion-item>
+            <ion-icon name="chatbox-ellipses-outline" slot="start"></ion-icon>
+            <ion-label position="stacked">Descripción</ion-label>
+            <ion-textarea
+              formControlName="descripcion"
+              auto-grow="true"
+              placeholder="Breve descripción de la categoría"
+              maxlength="160"
+              [counter]="true">
+            </ion-textarea>
+            <ion-note slot="helper">Máx. 160 caracteres.</ion-note>
+          </ion-item>
+
+          <!-- Impuesto: control dual (range + input numérico sincronizados) -->
+          <ion-item class="tax-row">
+            <ion-icon name="cash-outline" slot="start"></ion-icon>
+            <ion-label>Impuesto (%)</ion-label>
+            <div class="tax-input">
+              <ion-input
+                formControlName="impuesto"
+                type="number"
+                inputmode="decimal"
+                placeholder="0"
+                min="0"
+                max="100"
+                step="0.01"
+                (ionBlur)="normalizeTaxInput()">
+              </ion-input>
+              <span class="suffix">%</span>
+            </div>
+          </ion-item>
+
+          <div class="range-wrap">
+            <ion-range
+              [value]="form.value.impuesto ?? 0"
+              min="0"
+              max="100"
+              step="0.5"
+              [pin]="true"
+              (ionChange)="onTaxRangeChange($event)">
+              <ion-label slot="start">0%</ion-label>
+              <ion-label slot="end">100%</ion-label>
+            </ion-range>
+            <ion-note color="medium">Desliza o ajusta el campo numérico. Se
+              admiten decimales.</ion-note>
+          </div>
+
+          <ion-item>
+            <ion-icon name="calendar-outline" slot="start"></ion-icon>
+            <ion-label position="stacked">Fecha de registro</ion-label>
+            <ion-input
+              formControlName="fecha_registro"
+              type="date">
+            </ion-input>
+          </ion-item>
+        </ion-list>
+      </form>
+    </ion-content>
+
+    <ion-footer>
+      <ion-toolbar>
+        <div class="footer-actions">
+          <ion-button expand="block" fill="outline" color="medium"
+            (click)="closeModal()" [disabled]="saving">
+            Cancelar
+          </ion-button>
+          <ion-button expand="block" color="primary" (click)="submitModal()"
+            [disabled]="saving || form.invalid">
+            {{ modalMode === 'edit' ? 'Guardar cambios' : 'Crear categoría' }}
+          </ion-button>
+        </div>
+      </ion-toolbar>
+    </ion-footer>
+  </ng-template>
+</ion-modal>
