@@ -201,8 +201,12 @@ export class LoginComponent implements OnInit {
         await this._loadingService.hideLoading();
         this.isSubmitting = false;
 
-        const returnUrl =
-          this.route.snapshot.queryParamMap.get("returnUrl") || "/dashboard";
+        // Paso 7: prioriza el returnUrl guardado por el interceptor,
+        // luego el de query param y si no, cae a /dashboard
+        const storedReturn = this._authSessionService.consumeReturnUrl();
+        const qpReturn = this.route.snapshot.queryParamMap.get("returnUrl");
+        const returnUrl = storedReturn || qpReturn || "/dashboard";
+
         this.router.navigateByUrl(returnUrl);
       },
       error: async (err) => {

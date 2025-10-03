@@ -1,9 +1,16 @@
 // src/app/pages/dashboard/customers/components/customer-detail/customer-detail.component.ts
 import { Component, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
-import { IonicModule, NavController } from "@ionic/angular";
+import {
+  IonicModule,
+  NavController,
+  ToastController,
+  AlertController,
+} from "@ionic/angular";
 import { HttpClientModule } from "@angular/common/http";
 import { ActivatedRoute } from "@angular/router";
+import { FormsModule } from "@angular/forms";
+
 import { ClientesService } from "src/app/core/services/bussiness/clientes.service";
 import {
   OrderService,
@@ -33,10 +40,20 @@ interface UIOrder {
   total: number;
 }
 
+// Si tienes una interfaz en tu core, úsala.
+// Aquí dejo una local para no romper imports.
+interface UpdateCustomerPayload {
+  id: string;
+  nombre?: string;
+  correo?: string;
+  telefono?: string;
+  direccion?: string;
+}
+
 @Component({
   selector: "app-customer-detail",
   standalone: true,
-  imports: [CommonModule, IonicModule, HttpClientModule],
+  imports: [CommonModule, IonicModule, HttpClientModule, FormsModule],
   templateUrl: "./customer-detail.component.html",
   styleUrls: ["./customer-detail.component.scss"],
 })
@@ -48,12 +65,27 @@ export class CustomerDetailComponent implements OnInit {
   orders: UIOrder[] = [];
 
   private id = "";
-
   private originalById = new Map<string, any>();
+
+  // --- Estado del modal de edición ---
+  editOpen = false;
+  edit: {
+    nombre: string;
+    correo: string;
+    telefono: string;
+    direccion: string;
+  } = {
+    nombre: "",
+    correo: "",
+    telefono: "",
+    direccion: "",
+  };
 
   constructor(
     private route: ActivatedRoute,
     private nav: NavController,
+    private toastCtrl: ToastController,
+    private alertCtrl: AlertController,
     private clientesSrv: ClientesService,
     private orderSrv: OrderService
   ) {}
@@ -78,18 +110,116 @@ export class CustomerDetailComponent implements OnInit {
     }
   }
 
-  
   goBack() {
     if (history.length > 1) this.nav.back();
     else this.nav.navigateBack(["/customers"]);
   }
 
+  // =====================
+  // Edición / Eliminación
+  // =====================
+  openEdit() {
+    if (!this.customer) return;
+    this.edit = {
+      nombre: this.customer.nombre || "",
+      correo: this.customer.correo || "",
+      telefono: this.customer.telefono || "",
+      direccion: this.customer.direccion || "",
+    };
+    this.editOpen = true;
+  }
 
+  closeEdit() {
+    this.editOpen = false;
+  }
+
+  async saveEdit() {
+    if (!this.customer) return;
+
+    const payload = {
+      id: String(this.customer.id).trim(),
+      nombre: (this.edit.nombre || "").trim(),
+      correo: (this.edit.correo || "").trim(),
+      telefono: (this.edit.telefono || "").trim(),
+      direccion: (this.edit.direccion || "").trim(),
+    };
+
+    try {
+      const res = await this.clientesSrv.updateCliente(payload);
+
+      if (res.changed) {
+        await this.showToast("Cliente actualizado", "success");
+      } else {
+        await this.showToast("Sin cambios para guardar", "success");
+      }
+
+      this.closeEdit();
+      this.load();
+    } catch (e: any) {
+      await this.showToast(
+        e?.message || "No se pudo actualizar el cliente",
+        "danger"
+      );
+    }
+  }
+
+  async onDelete() {
+    if (!this.customer) return;
+    const alert = await this.alertCtrl.create({
+      header: "Eliminar cliente",
+      message: `¿Seguro que deseas eliminar a <b>${
+        this.customer.nombre || "este cliente"
+      }</b>? Esta acción no se puede deshacer.`,
+      buttons: [
+        { text: "Cancelar", role: "cancel" },
+        {
+          text: "Eliminar",
+          role: "destructive",
+          handler: () => this.confirmDelete(),
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  private async confirmDelete() {
+    if (!this.customer) return;
+    try {
+      const anySrv: any = this.clientesSrv as any;
+      if (typeof anySrv.deleteCliente === "function") {
+        await anySrv.deleteCliente(this.customer.id);
+      } else if (typeof anySrv.deleteById === "function") {
+        await anySrv.deleteById(this.customer.id);
+      } else if (typeof anySrv.remove === "function") {
+        await anySrv.remove(this.customer.id);
+      } else if (typeof anySrv.delete === "function") {
+        await anySrv.delete(this.customer.id);
+      } else {
+        throw new Error(
+          "El servicio de clientes no expone método de eliminación"
+        );
+      }
+
+      await this.showToast("Cliente eliminado", "success");
+      this.goBack();
+    } catch (e: any) {
+      await this.showToast(
+        e?.message || "No se pudo eliminar el cliente",
+        "danger"
+      );
+    }
+  }
+
+  // =====================
+  // Carga de datos
+  // =====================
   private async loadCustomer() {
     let raw: any = null;
     const anySrv: any = this.clientesSrv as any;
     if (typeof anySrv.getClienteById === "function") {
       raw = await anySrv.getClienteById(this.id);
+    } else if (typeof anySrv.getById === "function") {
+      raw = await anySrv.getById(this.id);
     } else {
       const list: any[] = await this.clientesSrv.getClientes();
       raw =
@@ -106,17 +236,12 @@ export class CustomerDetailComponent implements OnInit {
     this.customer = this.toUICustomer(raw);
   }
 
- 
   private async loadOrdersWithFallback() {
     let arr: PedidoApi[] = [];
-
-    
     try {
       arr = await this.orderSrv.getByCliente(this.id);
-    } catch {
-    }
+    } catch {}
 
-   
     const phone = (this.customer?.telefono || "").toString().replace(/\D/g, "");
     if ((!arr || arr.length === 0) && phone) {
       const srv: any = this.orderSrv as any;
@@ -131,12 +256,9 @@ export class CustomerDetailComponent implements OnInit {
             ...(r?.entregados ?? []),
           ];
         }
-      } catch {
-        
-      }
+      } catch {}
     }
 
-    
     this.orders = (arr ?? []).map(this.toUIOrder).sort((a, b) => {
       const ta = a.date ? a.date.getTime() : 0;
       const tb = b.date ? b.date.getTime() : 0;
@@ -144,6 +266,9 @@ export class CustomerDetailComponent implements OnInit {
     });
   }
 
+  // =====================
+  // Mapeos y utilidades
+  // =====================
   private toUICustomer = (c: any): UICustomer => ({
     id: String(c?.id ?? c?._id ?? c?.cliente_id ?? ""),
     nombre: String(c?.nombre ?? c?.name ?? "").trim(),
@@ -158,7 +283,6 @@ export class CustomerDetailComponent implements OnInit {
     const dateStr = String(o.fecha ?? o.created_at ?? "").replace(" ", "T");
     const d = dateStr ? new Date(dateStr) : null;
 
-    
     const itemsCount = this.unitsFromAny(o);
 
     const s = String(o.estado ?? "").toLowerCase();
@@ -171,7 +295,7 @@ export class CustomerDetailComponent implements OnInit {
         ? "Entregado"
         : s === "cancelado"
         ? "Cancelado"
-        : o.estado || "";
+        : (o as any).estado || "";
 
     return {
       id: String(o.id),
@@ -347,12 +471,6 @@ export class CustomerDetailComponent implements OnInit {
     };
   }
 
-  private readonly ORDER_DETAIL_PATH = [
-    "/dashboard",
-    "orders",
-    "orders-detail",
-  ];
-
   async openOrder(id: string) {
     let raw = this.originalById.get(String(id));
 
@@ -363,8 +481,7 @@ export class CustomerDetailComponent implements OnInit {
       try {
         const res = await (this.orderSrv as any).getById(String(id));
         raw = (res && (res.data || res.pedido)) || res || null;
-      } catch {
-      }
+      } catch {}
     }
 
     const pref = raw
@@ -402,13 +519,10 @@ export class CustomerDetailComponent implements OnInit {
               units !== ui.itemsCount
             ) {
               ui.itemsCount = units;
-
               this.originalById.set(String(ui.id), det);
             }
           }
-        } catch {
-          
-        }
+        } catch {}
       }
     };
 
@@ -417,7 +531,6 @@ export class CustomerDetailComponent implements OnInit {
     );
   }
 
- 
   pillClass(o: UIOrder) {
     const s = (o.status || "").toLowerCase();
     if (s.includes("pend")) return "pill pill--pendiente";
@@ -430,5 +543,15 @@ export class CustomerDetailComponent implements OnInit {
 
   trackOrderId(_: number, o: UIOrder) {
     return o.id;
+  }
+
+  private async showToast(message: string, color: "success" | "danger") {
+    const t = await this.toastCtrl.create({
+      message,
+      duration: 1800,
+      color,
+      position: "bottom",
+    });
+    await t.present();
   }
 }

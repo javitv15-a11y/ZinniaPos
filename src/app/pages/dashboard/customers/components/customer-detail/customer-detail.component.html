@@ -32,17 +32,40 @@
     </ion-card>
 
     <ng-container *ngIf="!error">
+      <!-- Información del cliente -->
       <div class="box" *ngIf="customer">
         <h2 class="section-title">Información de contacto</h2>
-
         <div class="contact">
-          <div class="row"><div class="label">Nombre</div><div class="value">{{ customer?.nombre }}</div></div>
+          <div class="row"><div class="label">Nombre</div><div class="value">{{ customer?.nombre || '—' }}</div></div>
           <div class="row"><div class="label">Correo electrónico</div><div class="value">{{ customer?.correo || '—' }}</div></div>
           <div class="row"><div class="label">Teléfono / Celular</div><div class="value">{{ customer?.telefono || '—' }}</div></div>
           <div class="row"><div class="label">Dirección</div><div class="value">{{ customer?.direccion || '—' }}</div></div>
         </div>
       </div>
 
+      <!-- Acciones sobre el cliente -->
+      <div class="box" *ngIf="customer">
+        <h2 class="section-title">Acciones</h2>
+        <ion-grid class="actions">
+          <ion-row>
+            <ion-col size="6">
+              <ion-button expand="block" fill="solid" color="primary" (click)="openEdit()">
+                <ion-icon name="create-outline" slot="start"></ion-icon>
+                Editar
+              </ion-button>
+            </ion-col>
+            <ion-col size="6">
+              <ion-button expand="block" fill="outline" color="danger" (click)="onDelete()">
+                <ion-icon name="trash-outline" slot="start"></ion-icon>
+                Eliminar
+              </ion-button>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+        <p class="muted">Puedes actualizar la información del cliente o eliminarlo definitivamente.</p>
+      </div>
+
+      <!-- Historial de pedidos -->
       <div class="box">
         <h2 class="section-title">Historial de pedidos</h2>
 
@@ -75,4 +98,94 @@
       </div>
     </ng-container>
   </ng-template>
+
+  <!-- Modal de edición (sheet bonito) -->
+  <ion-modal [isOpen]="editOpen" (didDismiss)="closeEdit()" class="edit-modal">
+    <ng-template>
+      <ion-header class="edit-header">
+        <ion-toolbar>
+          <ion-buttons slot="start">
+            <ion-button fill="clear" (click)="closeEdit()" aria-label="Cerrar">
+              <ion-icon name="close-outline"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+          <ion-title>Editar Cliente</ion-title>
+          <ion-buttons slot="end">
+            <ion-button fill="clear" (click)="saveEdit()" aria-label="Guardar">
+              <ion-icon name="checkmark-outline"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="edit-content">
+        <div class="form-card">
+          <ion-list inset="true" class="form-list">
+
+            <!-- Nombre -->
+            <ion-item mode="md" fill="outline" class="field">
+              <ion-icon slot="start" name="person-outline"></ion-icon>
+              <ion-label position="floating">Nombre</ion-label>
+              <ion-input
+                [(ngModel)]="edit.nombre"
+                name="nombre"
+                autocomplete="name"
+                placeholder="Nombre del cliente">
+              </ion-input>
+            </ion-item>
+
+            <!-- Correo -->
+            <ion-item mode="md" fill="outline" class="field">
+              <ion-icon slot="start" name="mail-outline"></ion-icon>
+              <ion-label position="floating">Correo electrónico</ion-label>
+              <ion-input
+                type="email"
+                inputmode="email"
+                [(ngModel)]="edit.correo"
+                name="correo"
+                autocomplete="email"
+                placeholder="correo@dominio.com">
+              </ion-input>
+            </ion-item>
+
+            <!-- Teléfono -->
+            <ion-item mode="md" fill="outline" class="field">
+              <ion-icon slot="start" name="call-outline"></ion-icon>
+              <ion-label position="floating">Teléfono / Celular</ion-label>
+              <ion-input
+                type="tel"
+                inputmode="tel"
+                maxlength="20"
+                [(ngModel)]="edit.telefono"
+                name="telefono"
+                placeholder="3001234567">
+              </ion-input>
+            </ion-item>
+
+            <!-- Dirección -->
+            <ion-item mode="md" fill="outline" class="field">
+              <ion-icon slot="start" name="location-outline"></ion-icon>
+              <ion-label position="floating">Dirección</ion-label>
+              <ion-input
+                [(ngModel)]="edit.direccion"
+                name="direccion"
+                autocomplete="street-address"
+                placeholder="Calle 123 #45-67">
+              </ion-input>
+            </ion-item>
+
+          </ion-list>
+        </div>
+      </ion-content>
+
+      <ion-footer class="edit-footer">
+        <ion-toolbar>
+          <ion-button expand="block" size="large" class="btn-save" (click)="saveEdit()">
+            <ion-icon name="save-outline" slot="start"></ion-icon>
+            Guardar cambios
+          </ion-button>
+        </ion-toolbar>
+      </ion-footer>
+    </ng-template>
+  </ion-modal>
 </ion-content>
